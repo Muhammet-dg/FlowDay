@@ -2,9 +2,16 @@ export type Priority = 'low' | 'medium' | 'high';
 
 export type Category = 'work' | 'personal' | 'urgent';
 
-export type FilterCategory = 'all' | Category;
+// FilterCategory: 'all', standart kategoriler veya 'project:<id>' şeklinde proje filtresi
+export type FilterCategory = 'all' | Category | `project:${string}`;
 
-export type Tab = 'tasks' | 'completed' | 'stats';
+export type Tab = 'tasks' | 'projects' | 'completed' | 'stats';
+
+export type Subtask = {
+  id: string;
+  title: string;
+  completed: boolean;
+};
 
 export type Task = {
   id: string;
@@ -12,6 +19,8 @@ export type Task = {
   note?: string;
   priority: Priority;
   category?: Category;
+  project_id?: string | null;
+  subtasks?: Subtask[];
   completed: boolean;
   created_at: string;
   completed_at?: string;
@@ -24,8 +33,107 @@ export type TaskFormData = {
   note: string;
   priority: Priority;
   category?: Category;
+  project_id?: string | null;
+  subtasks?: Subtask[];
   reminder_time: string | null; // ISO 8601 — null ise bildirim yok
 };
+
+// ─── Proje ve Öğrendiklerim Tipleri ─────────────────────────────────────────
+
+export type ProjectStatus = 'active' | 'on_hold' | 'completed';
+
+export type ProjectIconName =
+  | 'folder'
+  | 'rocket'
+  | 'code'
+  | 'book'
+  | 'target'
+  | 'briefcase'
+  | 'sparkles'
+  | 'layers';
+
+export type Milestone = {
+  id: string;
+  title: string;
+  completed: boolean;
+  target_date?: string | null;
+};
+
+export type Project = {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string;
+  icon: ProjectIconName;
+  description?: string;
+  start_date?: string | null;
+  target_date?: string | null;
+  status: ProjectStatus;
+  milestones: Milestone[];
+  created_at: string;
+  updated_at?: string;
+};
+
+export type ProjectFormData = {
+  name: string;
+  color: string;
+  icon: ProjectIconName;
+  description?: string;
+  start_date?: string | null;
+  target_date?: string | null;
+  status: ProjectStatus;
+  milestones?: Milestone[];
+};
+
+export type Learning = {
+  id: string;
+  user_id: string;
+  content: string;
+  project_id?: string | null;
+  tags: string[];
+  learned_date: string; // YYYY-MM-DD
+  created_at: string;
+};
+
+export type LearningFormData = {
+  content: string;
+  project_id?: string | null;
+  tags: string[];
+  learned_date?: string;
+};
+
+export const PROJECT_STATUS_CONFIG: Record<
+  ProjectStatus,
+  { label: string; badgeBg: string; badgeText: string; dotColor: string }
+> = {
+  active: {
+    label: 'Aktif',
+    badgeBg: 'bg-emerald-500/15',
+    badgeText: 'text-emerald-300',
+    dotColor: '#10B981',
+  },
+  on_hold: {
+    label: 'Beklemede',
+    badgeBg: 'bg-amber-500/15',
+    badgeText: 'text-amber-300',
+    dotColor: '#F59E0B',
+  },
+  completed: {
+    label: 'Tamamlandı',
+    badgeBg: 'bg-indigo-500/15',
+    badgeText: 'text-indigo-300',
+    dotColor: '#6366F1',
+  },
+};
+
+export const PROJECT_COLORS = [
+  { id: 'indigo', hex: '#6366F1', label: 'İndigo' },
+  { id: 'emerald', hex: '#10B981', label: 'Zümrüt' },
+  { id: 'amber', hex: '#F59E0B', label: 'Kehribar' },
+  { id: 'rose', hex: '#F43F5E', label: 'Mercan' },
+  { id: 'cyan', hex: '#06B6D4', label: 'Turkuaz' },
+  { id: 'violet', hex: '#8B5CF6', label: 'Mor' },
+] as const;
 
 export const PRIORITY_CONFIG = {
   low: {
@@ -97,16 +205,23 @@ export const CATEGORY_CONFIG: Record<
   },
 };
 
-// ─── Kategori Meta Yardımcıları (Şema bağımsız kalıcılık) ───────────────────
+// ─── Kategori & Meta Yardımcıları (Şema bağımsız kalıcılık + geriye uyumluluk) ───
 
 const CATEGORY_PREFIX_REGEX = /^\[cat:(work|personal|urgent)\]\s*/i;
 const LOCAL_CATEGORY_KEY = 'flowday_task_categories_v1';
+const LOCAL_TASK_META_KEY = 'flowday_task_meta_v2';
+
+type LocalTaskMeta = {
+  category?: Category;
+  project_id?: string | null;
+  subtasks?: Subtask[];
+};
 
 export function saveLocalCategory(taskId: string, category?: Category): void {
   if (!category) return;
   try {
     const raw = localStorage.getItem(LOCAL_CATEGORY_KEY);
-    const map: Record<string, Category> = raw ? JSON.parse(raw) : {};
+    const map: Record<string, Category> = raw ? (JSON.parse(raw) as Record<string, Category>) : {};
     map[taskId] = category;
     localStorage.setItem(LOCAL_CATEGORY_KEY, JSON.stringify(map));
   } catch {
@@ -118,7 +233,31 @@ export function getLocalCategory(taskId: string): Category | undefined {
   try {
     const raw = localStorage.getItem(LOCAL_CATEGORY_KEY);
     if (!raw) return undefined;
-    const map: Record<string, Category> = JSON.parse(raw);
+    const map: Record<string, Category> = JSON.parse(raw) as Record<string, Category>;
+    return map[taskId];
+  } catch {
+    return undefined;
+  }
+}
+
+export function saveLocalTaskMeta(taskId: string, meta: LocalTaskMeta): void {
+  try {
+    const raw = localStorage.getItem(LOCAL_TASK_META_KEY);
+    const map: Record<string, LocalTaskMeta> = raw
+      ? (JSON.parse(raw) as Record<string, LocalTaskMeta>)
+      : {};
+    map[taskId] = { ...map[taskId], ...meta };
+    localStorage.setItem(LOCAL_TASK_META_KEY, JSON.stringify(map));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+export function getLocalTaskMeta(taskId: string): LocalTaskMeta | undefined {
+  try {
+    const raw = localStorage.getItem(LOCAL_TASK_META_KEY);
+    if (!raw) return undefined;
+    const map: Record<string, LocalTaskMeta> = JSON.parse(raw) as Record<string, LocalTaskMeta>;
     return map[taskId];
   } catch {
     return undefined;
@@ -136,11 +275,12 @@ export function encodeNoteWithCategory(note?: string, category?: Category): stri
 export function decodeNoteAndCategory(
   rawNote?: string | null,
   taskId?: string,
-  priority?: Priority
+  priority?: Priority,
+  rowCategory?: Category | null
 ): { note?: string; category?: Category } {
   if (!rawNote) {
     const localCat = taskId ? getLocalCategory(taskId) : undefined;
-    const inferred = localCat ?? (priority === 'high' ? 'urgent' : 'personal');
+    const inferred = rowCategory ?? localCat ?? (priority === 'high' ? 'urgent' : 'personal');
     return { note: undefined, category: inferred };
   }
 
@@ -150,12 +290,12 @@ export function decodeNoteAndCategory(
     const stripped = rawNote.replace(CATEGORY_PREFIX_REGEX, '').trim();
     return {
       note: stripped || undefined,
-      category: cat,
+      category: rowCategory ?? cat,
     };
   }
 
   const localCat = taskId ? getLocalCategory(taskId) : undefined;
-  const inferred = localCat ?? (priority === 'high' ? 'urgent' : 'personal');
+  const inferred = rowCategory ?? localCat ?? (priority === 'high' ? 'urgent' : 'personal');
   return {
     note: rawNote,
     category: inferred,

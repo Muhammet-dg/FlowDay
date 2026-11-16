@@ -1,4 +1,4 @@
-import { ListTodo, CheckCircle2, BarChart3 } from 'lucide-react';
+import { ListTodo, FolderKanban, CheckCircle2, BarChart3 } from 'lucide-react';
 import type { Tab } from '../types';
 
 type BottomNavProps = {
@@ -6,6 +6,7 @@ type BottomNavProps = {
   onTabChange: (tab: Tab) => void;
   activeCount: number;
   completedCount: number;
+  projectCount?: number;
 };
 
 type TabItem = {
@@ -16,13 +17,21 @@ type TabItem = {
 
 const TABS: TabItem[] = [
   { id: 'tasks', label: 'Görevler', Icon: ListTodo },
+  { id: 'projects', label: 'Projeler', Icon: FolderKanban },
   { id: 'completed', label: 'Tamamlanan', Icon: CheckCircle2 },
   { id: 'stats', label: 'İstatistik', Icon: BarChart3 },
 ];
 
-export function BottomNav({ activeTab, onTabChange, activeCount, completedCount }: BottomNavProps) {
+export function BottomNav({
+  activeTab,
+  onTabChange,
+  activeCount,
+  completedCount,
+  projectCount = 0,
+}: BottomNavProps) {
   const getCount = (tab: Tab): number | null => {
     if (tab === 'tasks') return activeCount;
+    if (tab === 'projects') return projectCount > 0 ? projectCount : null;
     if (tab === 'completed') return completedCount;
     return null;
   };
@@ -50,12 +59,12 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
               <button
                 key={id}
                 onClick={() => onTabChange(id)}
-                className="flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all duration-200 active:scale-95 relative"
+                className="flex-1 min-h-[46px] flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all duration-200 active:scale-95 relative"
               >
                 {/* Aktif Sekme Yüzey Vurgusu */}
                 {isActive && (
                   <div
-                    className="absolute inset-x-2 inset-y-0.5 rounded-xl transition-all duration-300"
+                    className="absolute inset-x-1.5 inset-y-0.5 rounded-xl transition-all duration-300"
                     style={{
                       background: 'var(--primary-dim)',
                     }}
@@ -64,7 +73,7 @@ export function BottomNav({ activeTab, onTabChange, activeCount, completedCount 
 
                 <div className="relative z-10 flex items-center justify-center">
                   <Icon
-                    size={20}
+                    size={19}
                     strokeWidth={isActive ? 2.2 : 1.75}
                     className={`transition-all duration-200 ${
                       isActive ? 'text-indigo-400 -translate-y-0.5' : 'text-app-muted'

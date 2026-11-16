@@ -193,7 +193,7 @@ export function useNotifications({ userId }: UseNotificationsOptions): UseNotifi
 
     navigator.serviceWorker.addEventListener('message', handler);
     return () => navigator.serviceWorker.removeEventListener('message', handler);
-  }, []);
+  }, [userId]);
 
   // ── subscribe ─────────────────────────────────────────────────────────────
   /**

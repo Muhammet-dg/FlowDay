@@ -486,7 +486,29 @@ body {
 
 .animate-strike-draw {
   transform-origin: left center;
-  animation: strike-draw 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: strike-draw 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* 7. İlerleme Halkası %100 Kutlama Parlaması */
+@keyframes ring-celebrate {
+  0%   { transform: scale(1); filter: drop-shadow(0 0 0px rgba(16, 185, 129, 0)); }
+  40%  { transform: scale(1.08); filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.65)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.25)); }
+}
+
+.animate-ring-celebrate {
+  animation: ring-celebrate 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* 8. Geri Al Toast 5sn İlerleme Çubuğu */
+@keyframes toast-countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+.animate-toast-countdown {
+  transform-origin: left center;
+  animation: toast-countdown 5s linear forwards;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -582,6 +604,25 @@ body {
 
 .animate-breathe {
   animation: breathe 4s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ERİŞİLEBİLİRLİK: PREFERS-REDUCED-MOTION DESTEĞİ
+   ══════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .rain-bg-container,
+  .rain-bg-container::after {
+    animation: none !important;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════

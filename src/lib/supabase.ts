@@ -1,12 +1,24 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Task } from '../types';
-import { decodeNoteAndCategory } from '../types';
+import type {
+  Category,
+  Learning,
+  Milestone,
+  Project,
+  ProjectIconName,
+  ProjectStatus,
+  Subtask,
+  Task,
+} from '../types';
+import { decodeNoteAndCategory, getLocalTaskMeta } from '../types';
+import type { PushSubscriptionJSON } from '../hooks/useNotifications';
 
 const DEFAULT_SUPABASE_URL = 'https://ooeowjpmoxjzxtwqwvtk.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_4Lusd9avoZzeIygvaZMnug_mOdjIq31';
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || DEFAULT_SUPABASE_URL;
-const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || DEFAULT_SUPABASE_ANON_KEY;
+const supabaseUrl =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) || DEFAULT_SUPABASE_URL;
+const supabaseAnonKey =
+  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || DEFAULT_SUPABASE_ANON_KEY;
 
 // ─── tasks tablosu ───────────────────────────────────────────
 export type TaskRow = {
@@ -14,37 +26,52 @@ export type TaskRow = {
   title: string;
   note: string | null;
   priority: 'low' | 'medium' | 'high';
+  category?: Category | null;
+  project_id?: string | null;
+  subtasks?: Subtask[] | null;
   completed: boolean;
   created_at: string;
   completed_at: string | null;
-  reminder_time: string | null;  // ISO 8601 — bildirim zamanı
-  is_notified: boolean;           // bildirim gönderildi mi
+  reminder_time: string | null; // ISO 8601 — bildirim zamanı
+  is_notified: boolean; // bildirim gönderildi mi
   user_id: string | null;
 };
 
-// ─── push_subscriptions tablosu ──────────────────────────────
-/**
- * Her satır bir cihazın push aboneliğini temsil eder.
- * Aynı kullanıcı birden fazla cihazdan abone olabilir;
- * endpoint sütunu unique olduğundan çakışma olmaz.
- */
-export type PushSubscriptionRow = {
-  /** Otomatik UUID */
+// ─── projects tablosu ────────────────────────────────────────
+export type ProjectRow = {
   id: string;
-  /** Supabase auth user id (opsiyonel, auth entegrasyonuna kadar null) */
+  user_id: string;
+  name: string;
+  color: string;
+  icon: string;
+  description: string | null;
+  start_date: string | null;
+  target_date: string | null;
+  status: ProjectStatus;
+  milestones: Milestone[] | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// ─── learnings tablosu ───────────────────────────────────────
+export type LearningRow = {
+  id: string;
+  user_id: string;
+  content: string;
+  project_id: string | null;
+  tags: string[] | null;
+  learned_date: string;
+  created_at: string;
+};
+
+// ─── push_subscriptions tablosu ──────────────────────────────
+export type PushSubscriptionRow = {
+  id: string;
   user_id: string | null;
-  /**
-   * Cihazı tanımlayan takma ad.
-   * Örn: "iPhone 13", "Laptop", "İş Bilgisayarı"
-   */
   device_label: string;
-  /** Push abonelik endpoint URL'si (unique) */
   endpoint: string;
-  /** Web Push p256dh anahtarı */
   p256dh: string;
-  /** Web Push auth anahtarı */
   auth: string;
-  /** Kayıt zamanı */
   created_at: string;
 };
 
@@ -58,6 +85,26 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<TaskRow, 'id'>>;
+        Relationships: [];
+      };
+      projects: {
+        Row: ProjectRow;
+        Insert: Omit<ProjectRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<ProjectRow, 'id'>>;
+        Relationships: [];
+      };
+      learnings: {
+        Row: LearningRow;
+        Insert: Omit<LearningRow, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<LearningRow, 'id'>>;
+        Relationships: [];
       };
       push_subscriptions: {
         Row: PushSubscriptionRow;
@@ -66,8 +113,13 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<PushSubscriptionRow, 'id'>>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 };
 
@@ -75,13 +127,22 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Supabase satırını uygulama Task tipine dönüştür
 export function rowToTask(row: TaskRow): Task {
-  const { note, category } = decodeNoteAndCategory(row.note, row.id, row.priority);
+  const localMeta = getLocalTaskMeta(row.id);
+  const { note, category } = decodeNoteAndCategory(
+    row.note,
+    row.id,
+    row.priority,
+    row.category ?? localMeta?.category ?? null
+  );
+
   return {
     id: row.id,
     title: row.title,
     note,
     priority: row.priority,
     category,
+    project_id: row.project_id !== undefined ? row.project_id : (localMeta?.project_id ?? null),
+    subtasks: Array.isArray(row.subtasks) ? row.subtasks : (localMeta?.subtasks ?? []),
     completed: row.completed,
     created_at: row.created_at,
     completed_at: row.completed_at ?? undefined,
@@ -90,37 +151,55 @@ export function rowToTask(row: TaskRow): Task {
   };
 }
 
+export function rowToProject(row: ProjectRow): Project {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    name: row.name,
+    color: row.color || '#6366F1',
+    icon: (row.icon as ProjectIconName) || 'folder',
+    description: row.description ?? undefined,
+    start_date: row.start_date,
+    target_date: row.target_date,
+    status: row.status || 'active',
+    milestones: Array.isArray(row.milestones) ? row.milestones : [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+export function rowToLearning(row: LearningRow): Learning {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    content: row.content,
+    project_id: row.project_id,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    learned_date: row.learned_date,
+    created_at: row.created_at,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────
 // Push Aboneliği Yardımcı Fonksiyonları
 // ─────────────────────────────────────────────────────────────
 
-import type { PushSubscriptionJSON } from '../hooks/useNotifications';
-
-/**
- * Cihazın push aboneliğini Supabase'e kaydeder (ya da günceller).
- *
- * @param sub       useNotifications hook'undan gelen subscription JSON
- * @param deviceLabel  Kullanıcının cihazına verdiği isim
- * @param userId    (opsiyonel) Supabase auth user id
- * @returns Kaydedilen satır ya da null
- */
 export async function savePushSubscription(
   sub: PushSubscriptionJSON,
   deviceLabel: string,
   userId?: string | null
 ): Promise<PushSubscriptionRow | null> {
   const payload: Database['public']['Tables']['push_subscriptions']['Insert'] = {
-    user_id:      userId ?? null,
+    user_id: userId ?? null,
     device_label: deviceLabel.trim() || 'Bilinmeyen Cihaz',
-    endpoint:     sub.endpoint,
-    p256dh:       sub.keys.p256dh,
-    auth:         sub.keys.auth,
+    endpoint: sub.endpoint,
+    p256dh: sub.keys.p256dh,
+    auth: sub.keys.auth,
   };
 
-  // endpoint unique — çakışırsa mevcut kaydı güncelle
   const { data, error } = await supabase
     .from('push_subscriptions')
-    .upsert(payload as any, { onConflict: 'endpoint' })
+    .upsert(payload, { onConflict: 'endpoint' })
     .select()
     .single();
 
@@ -132,11 +211,6 @@ export async function savePushSubscription(
   return data as PushSubscriptionRow;
 }
 
-/**
- * Verilen endpoint'e ait aboneliği Supabase'den siler.
- *
- * @param endpoint  PushSubscription.endpoint değeri
- */
 export async function removePushSubscription(endpoint: string): Promise<void> {
   const { error } = await supabase
     .from('push_subscriptions')
@@ -148,12 +222,6 @@ export async function removePushSubscription(endpoint: string): Promise<void> {
   }
 }
 
-/**
- * Belirli bir kullanıcıya ait tüm push aboneliklerini getirir.
- * Kullanıcı kendi cihazlarını listelemek istediğinde kullanılır.
- *
- * @param userId  Supabase auth user id
- */
 export async function getPushSubscriptions(
   userId: string
 ): Promise<PushSubscriptionRow[]> {
@@ -170,58 +238,3 @@ export async function getPushSubscriptions(
 
   return (data ?? []) as PushSubscriptionRow[];
 }
-
-// ────────────────────────────────────────────────────────────
-// Supabase SQL Şeması (Supabase SQL Editor'de bir kez çalıştır)
-// ────────────────────────────────────────────────────────────
-/*
--- 1. tasks tablosunu oluştur
-create table if not exists public.tasks (
-  id           uuid        default gen_random_uuid() primary key,
-  user_id      uuid        references auth.users(id) on delete cascade,
-  title        text        not null,
-  note         text,
-  priority     text        check (priority in ('low', 'medium', 'high')) default 'medium',
-  completed    boolean     default false,
-  created_at   timestamptz default now(),
-  completed_at timestamptz
-);
-
--- 2. Row Level Security (kimlik doğrulama olmadan tüm erişim - geliştirme için)
-alter table public.tasks enable row level security;
-
--- Geliştirme aşaması için: Herkes okuyabilir/yazabilir (auth sonra kısıtlanacak)
-create policy "allow_all" on public.tasks for all using (true) with check (true);
-
--- ÜRETİM için (auth entegrasyonundan sonra yukarıdaki policy'i bununla değiştir):
--- create policy "Users own tasks" on public.tasks
---   for all using (auth.uid() = user_id)
---   with check (auth.uid() = user_id);
-
--- ─────────────────────────────────────────────────────────────
--- 3. push_subscriptions tablosunu oluştur
--- Her cihazın web push aboneliği burada tutulur.
--- Aynı kullanıcı birden fazla cihazdan abone olabilir.
--- ─────────────────────────────────────────────────────────────
-create table if not exists public.push_subscriptions (
-  id           uuid        default gen_random_uuid() primary key,
-  user_id      uuid        references auth.users(id) on delete cascade,
-  device_label text        not null default 'Bilinmeyen Cihaz',
-  endpoint     text        not null unique,
-  p256dh       text        not null,
-  auth         text        not null,
-  created_at   timestamptz default now()
-);
-
--- 4. RLS — push_subscriptions
-alter table public.push_subscriptions enable row level security;
-
--- Geliştirme için: tüm erişime izin ver
-create policy "allow_all_push" on public.push_subscriptions
-  for all using (true) with check (true);
-
--- ÜRETİM için (auth entegrasyonundan sonra yukarıdaki policy'i bununla değiştir):
--- create policy "Users own subscriptions" on public.push_subscriptions
---   for all using (auth.uid() = user_id)
---   with check (auth.uid() = user_id);
-*/

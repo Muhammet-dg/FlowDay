@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { Task } from '../types';
+import { useState, useMemo } from 'react';
+import type { Project, Subtask, Task } from '../types';
 import { TaskCard } from './TaskCard';
 import { EmptyState } from './EmptyState';
 import {
@@ -14,12 +14,14 @@ import {
 type TaskListProps = {
   tasks: Task[];
   archivedTasks?: Task[];
+  projects?: Project[];
   type: 'active' | 'completed';
   filteredCategoryName?: string;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onSnooze?: (id: string, mode: '1h' | 'tomorrow') => void;
   onFocus?: (task: Task) => void;
+  onUpdateSubtasks?: (taskId: string, subtasks: Subtask[]) => void;
   onClearCompleted?: () => void;
   onRestoreCompleted?: () => void;
   onArchiveCompleted?: () => void;
@@ -30,12 +32,14 @@ type TaskListProps = {
 export function TaskList({
   tasks,
   archivedTasks = [],
+  projects = [],
   type,
   filteredCategoryName,
   onToggle,
   onDelete,
   onSnooze,
   onFocus,
+  onUpdateSubtasks,
   onClearCompleted,
   onRestoreCompleted,
   onArchiveCompleted,
@@ -43,6 +47,14 @@ export function TaskList({
   onClearArchive,
 }: TaskListProps) {
   const [showArchive, setShowArchive] = useState(false);
+
+  const projectMap = useMemo(() => {
+    const map = new Map<string, Project>();
+    for (const p of projects) {
+      map.set(p.id, p);
+    }
+    return map;
+  }, [projects]);
 
   if (tasks.length === 0 && (type === 'active' || archivedTasks.length === 0)) {
     return <EmptyState type={type} filteredCategoryName={filteredCategoryName} />;
@@ -62,7 +74,7 @@ export function TaskList({
             {type === 'active' && (
               <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-app-faint font-medium">
                 <MoveHorizontal size={10} />
-                Kaydır: Tamamla / Ertele
+                Sağa: Tamamla · Sola: Sil
               </span>
             )}
           </div>
@@ -130,10 +142,12 @@ export function TaskList({
             <TaskCard
               key={task.id}
               task={task}
+              project={task.project_id ? projectMap.get(task.project_id) ?? null : null}
               onToggle={onToggle}
               onDelete={onDelete}
               onSnooze={onSnooze}
               onFocus={onFocus}
+              onUpdateSubtasks={onUpdateSubtasks}
             />
           ))}
         </div>

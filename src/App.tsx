@@ -1,29 +1,54 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { QuickCapture } from './components/QuickCapture';
 import { CategoryPills } from './components/CategoryPills';
+import { TodayProjectsStrip } from './components/TodayProjectsStrip';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { BottomNav } from './components/BottomNav';
-import { StatsView } from './components/StatsView';
 import { NotificationBanner } from './components/NotificationBanner';
 import { AuthScreen } from './components/AuthScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { FocusModal } from './components/FocusModal';
 import { Confetti } from './components/Confetti';
+import { UndoToast } from './components/UndoToast';
 import { BackgroundAnimation } from './components/BackgroundAnimation';
 import { useTasks } from './hooks/useTasks';
+import { useProjects } from './hooks/useProjects';
+import { useLearnings } from './hooks/useLearnings';
 import { useNotifications } from './hooks/useNotifications';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import { useStreak } from './hooks/useStreak';
-import type { Tab, FilterCategory, Task } from './types';
+import type { Tab, FilterCategory, Task, Category } from './types';
 import { CATEGORY_CONFIG } from './types';
-import { Plus, AlertCircle, RefreshCw, Loader2, BarChart3 } from 'lucide-react';
+import { AlertCircle, RefreshCw, Loader2, BarChart3 } from 'lucide-react';
+
+// Sekme bazlı Lazy Loading (Performans optimizasyonu)
+const ProjectsView = lazy(() =>
+  import('./components/ProjectsView').then((m) => ({ default: m.ProjectsView }))
+);
+const StatsView = lazy(() =>
+  import('./components/StatsView').then((m) => ({ default: m.StatsView }))
+);
+
+function TabFallbackSkeleton() {
+  return (
+    <div className="px-5 pt-16 space-y-4 animate-pulse select-none">
+      <div className="h-8 w-44 rounded-xl bg-surface" />
+      <div className="h-36 rounded-3xl bg-surface" />
+      <div className="grid grid-cols-2 gap-3.5">
+        <div className="h-24 rounded-2xl bg-surface" />
+        <div className="h-24 rounded-2xl bg-surface" />
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
+  const [initialProjectDetailId, setInitialProjectDetailId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [focusedTask, setFocusedTask] = useState<Task | null>(null);
@@ -44,9 +69,11 @@ function App() {
     signOut,
   } = useAuth();
 
-  // ─── Görev hook'u ──────────────────────────────────────────────────────────
   const userId = user?.id ?? '';
+
+  // ─── Görev hook'u ──────────────────────────────────────────────────────────
   const {
+    tasks,
     activeTasks,
     completedTasks,
     archivedTasks,
@@ -54,17 +81,41 @@ function App() {
     loading,
     isSubmitting,
     error,
+    deletedTaskToast,
     addTask,
     toggleTask,
     deleteTask,
+    undoDeleteTask,
+    dismissDeleteToast,
+    updateSubtasks,
     snoozeTask,
     clearCompleted,
     restoreCompleted,
     archiveCompleted,
     restoreFromArchive,
     clearArchive,
+    importTasks,
     refetch,
   } = useTasks({ userId });
+
+  // ─── Projeler ve Öğrendiklerim hook'ları ───────────────────────────────────
+  const {
+    projects,
+    addProject,
+    updateProject,
+    deleteProject,
+    addMilestone,
+    toggleMilestone,
+    deleteMilestone,
+    importProjects,
+  } = useProjects({ userId });
+
+  const {
+    learnings,
+    addLearning,
+    deleteLearning,
+    importLearnings,
+  } = useLearnings({ userId });
 
   // ─── Seri (Daily Streak) & Kutlama ─────────────────────────────────────────
   const { streak, showCelebration, dismissCelebration } = useStreak(
@@ -83,9 +134,13 @@ function App() {
     await subscribe();
   }, [subscribe]);
 
-  // ─── Kategori Filtrelemesi ─────────────────────────────────────────────────
+  // ─── Kategori & Proje Filtrelemesi ─────────────────────────────────────────
   const filteredActiveTasks = useMemo(() => {
     if (selectedCategory === 'all') return activeTasks;
+    if (selectedCategory.startsWith('project:')) {
+      const pid = selectedCategory.replace('project:', '');
+      return activeTasks.filter((t) => t.project_id === pid);
+    }
     if (selectedCategory === 'urgent') {
       return activeTasks.filter(
         (t) => t.category === 'urgent' || t.priority === 'high'
@@ -93,6 +148,27 @@ function App() {
     }
     return activeTasks.filter((t) => (t.category ?? 'personal') === selectedCategory);
   }, [activeTasks, selectedCategory]);
+
+  const resolvedDefaultCategory: Category =
+    selectedCategory === 'work' || selectedCategory === 'personal' || selectedCategory === 'urgent'
+      ? selectedCategory
+      : 'personal';
+
+  const resolvedDefaultProjectId: string | null = selectedCategory.startsWith('project:')
+    ? selectedCategory.replace('project:', '')
+    : null;
+
+  const filteredCategoryName = useMemo(() => {
+    if (selectedCategory === 'all') return undefined;
+    if (selectedCategory === 'work' || selectedCategory === 'personal' || selectedCategory === 'urgent') {
+      return CATEGORY_CONFIG[selectedCategory].label;
+    }
+    if (selectedCategory.startsWith('project:')) {
+      const pid = selectedCategory.replace('project:', '');
+      return projects.find((p) => p.id === pid)?.name ?? 'Seçili Proje';
+    }
+    return undefined;
+  }, [selectedCategory, projects]);
 
   const showHeader = activeTab === 'tasks' || activeTab === 'completed';
 
@@ -152,7 +228,7 @@ function App() {
         <Confetti streak={streak} onDismiss={dismissCelebration} />
       )}
 
-      {/* Mobil / PWA Çerçevesi — Arka plan transparan, animasyon doğrudan görünür */}
+      {/* Mobil / PWA Çerçevesi */}
       <div
         className="relative w-full h-full sm:max-w-md sm:h-[93vh] sm:max-h-[900px] sm:rounded-[32px] sm:border bg-transparent overflow-hidden flex flex-col select-none z-10"
         style={{
@@ -230,40 +306,76 @@ function App() {
           {/* ─── GÖREVLER SEKMESİ ─── */}
           {activeTab === 'tasks' && (
             <div>
-              {/* 1. Hızlı & Doğal Görev Girişi (Quick Capture) */}
+              {/* 1. Minimal & Sade Görev Girişi (Quick Capture) */}
               <QuickCapture
                 onAdd={(data) => {
                   void addTask(data);
                 }}
-                defaultCategory={
-                  selectedCategory === 'all' ? 'personal' : selectedCategory
-                }
+                defaultCategory={resolvedDefaultCategory}
+                defaultProjectId={resolvedDefaultProjectId}
+                projects={projects}
               />
 
-              {/* 2. Kategori & Akıllı Filtreleme (Pills) */}
+              {/* 2. Yatay Kaydırılan "Bugünkü Projelerim" Mini Kartları */}
+              <TodayProjectsStrip
+                projects={projects}
+                tasks={tasks}
+                selectedCategory={selectedCategory}
+                onSelectProjectFilter={setSelectedCategory}
+                onOpenProjectDetail={(projectId) => {
+                  setInitialProjectDetailId(projectId);
+                  setActiveTab('projects');
+                }}
+              />
+
+              {/* 3. Kategori & Proje Filtre Çipleri */}
               <CategoryPills
                 selected={selectedCategory}
                 onSelect={setSelectedCategory}
                 tasks={activeTasks}
+                projects={projects}
               />
 
-              {/* 3. Görev Listesi */}
+              {/* 4. Görev Listesi */}
               <div className="pt-1">
                 <TaskList
                   tasks={filteredActiveTasks}
+                  projects={projects}
                   type="active"
-                  filteredCategoryName={
-                    selectedCategory !== 'all'
-                      ? CATEGORY_CONFIG[selectedCategory].label
-                      : undefined
-                  }
+                  filteredCategoryName={filteredCategoryName}
                   onToggle={(id) => void toggleTask(id)}
                   onDelete={(id) => void deleteTask(id)}
                   onSnooze={(id, mode) => void snoozeTask(id, mode)}
                   onFocus={(task) => setFocusedTask(task)}
+                  onUpdateSubtasks={(taskId, subs) => void updateSubtasks(taskId, subs)}
                 />
               </div>
             </div>
+          )}
+
+          {/* ─── PROJELER & ÖĞRENDİKLERİM SEKMESİ ─── */}
+          {activeTab === 'projects' && (
+            <Suspense fallback={<TabFallbackSkeleton />}>
+              <ProjectsView
+                projects={projects}
+                tasks={tasks}
+                learnings={learnings}
+                initialProjectId={initialProjectDetailId}
+                onClearInitialProject={() => setInitialProjectDetailId(null)}
+                onAddProject={addProject}
+                onUpdateProject={updateProject}
+                onDeleteProject={deleteProject}
+                onAddMilestone={addMilestone}
+                onToggleMilestone={toggleMilestone}
+                onDeleteMilestone={deleteMilestone}
+                onAddTask={addTask}
+                onToggleTask={toggleTask}
+                onDeleteTask={deleteTask}
+                onUpdateSubtasks={updateSubtasks}
+                onAddLearning={addLearning}
+                onDeleteLearning={deleteLearning}
+              />
+            </Suspense>
           )}
 
           {/* ─── TAMAMLANANLAR SEKMESİ ─── */}
@@ -272,9 +384,11 @@ function App() {
               <TaskList
                 tasks={completedTasks}
                 archivedTasks={archivedTasks}
+                projects={projects}
                 type="completed"
                 onToggle={(id) => void toggleTask(id)}
                 onDelete={(id) => void deleteTask(id)}
+                onUpdateSubtasks={(taskId, subs) => void updateSubtasks(taskId, subs)}
                 onClearCompleted={() => void clearCompleted()}
                 onRestoreCompleted={() => void restoreCompleted()}
                 onArchiveCompleted={() => void archiveCompleted()}
@@ -286,56 +400,69 @@ function App() {
 
           {/* ─── İSTATİSTİKLER SEKMESİ ─── */}
           {activeTab === 'stats' && (
-            <div>
-              <div
-                className="px-5 pb-4"
-                style={{
-                  paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
-                }}
-              >
-                <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.14em]">
-                  Performans & Analiz
-                </p>
-                <div className="flex items-center gap-2.5 mt-1">
-                  <div
-                    className="w-8 h-8 rounded-xl flex items-center justify-center"
-                    style={{ background: 'var(--primary-dim)' }}
-                  >
-                    <BarChart3 size={16} className="text-indigo-400" />
+            <Suspense fallback={<TabFallbackSkeleton />}>
+              <div>
+                <div
+                  className="px-5 pb-4"
+                  style={{
+                    paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+                  }}
+                >
+                  <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.14em]">
+                    Performans & Analiz
+                  </p>
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <div
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
+                      style={{ background: 'var(--primary-dim)' }}
+                    >
+                      <BarChart3 size={16} className="text-indigo-400" />
+                    </div>
+                    <h1 className="text-app-primary text-2xl font-bold tracking-tight">
+                      İstatistikler
+                    </h1>
                   </div>
-                  <h1 className="text-app-primary text-2xl font-bold tracking-tight">
-                    İstatistikler
-                  </h1>
                 </div>
-              </div>
 
-              <StatsView stats={stats} streak={streak} />
-            </div>
+                <StatsView
+                  stats={stats}
+                  streak={streak}
+                  tasks={tasks}
+                  archivedTasks={archivedTasks}
+                  projects={projects}
+                  learnings={learnings}
+                  onToggleTask={(id) => void toggleTask(id)}
+                  onDeleteTask={(id) => void deleteTask(id)}
+                  onImportData={async (payload) => {
+                    if (payload.projects) await importProjects(payload.projects);
+                    if (payload.tasks) await importTasks(payload.tasks);
+                    if (payload.learnings) await importLearnings(payload.learnings);
+                  }}
+                />
+              </div>
+            </Suspense>
           )}
         </div>
 
-        {/* ─── Birincil Etkileşim FAB (Detaylı Görev Ekle) ─── */}
-        {activeTab === 'tasks' && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="absolute bottom-24 right-5 w-13 h-13 rounded-2xl flex items-center justify-center transition-all duration-200 active:scale-90 z-20"
-            style={{
-              background: 'var(--primary)',
-              boxShadow:
-                '0 10px 28px var(--primary-glow), 0 0 0 1px rgba(255, 255, 255, 0.14)',
-            }}
-            aria-label="Detaylı görev ekle"
-          >
-            <Plus size={24} strokeWidth={2.5} className="text-white" />
-          </button>
+        {/* ─── 5 Saniyelik Geri Al (Undo) Toast Bildirimi ─── */}
+        {deletedTaskToast && (
+          <UndoToast
+            taskTitle={deletedTaskToast.title}
+            onUndo={undoDeleteTask}
+            onDismiss={dismissDeleteToast}
+          />
         )}
 
-        {/* ─── Yüzen Alt Navigasyon (Floating Bottom Bar) ─── */}
+        {/* ─── Yüzen Alt Navigasyon (Floating Bottom Bar — 4 Öğe) ─── */}
         <BottomNav
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(t) => {
+            if (t !== 'projects') setInitialProjectDetailId(null);
+            setActiveTab(t);
+          }}
           activeCount={activeTasks.length}
           completedCount={completedTasks.length}
+          projectCount={projects.filter((p) => p.status === 'active').length}
         />
       </div>
 
