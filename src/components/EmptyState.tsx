@@ -61,8 +61,8 @@ export function EmptyState({ type, filteredCategoryName }: EmptyStateProps) {
             : 'Bugünlük her şey tamam!'}
         </h3>
         <p className="text-app-secondary text-xs leading-relaxed max-w-[235px]">
-          Yeni bir hedef belirlemek için üstteki hızlı giriş alanını veya{' '}
-          <span className="font-bold text-indigo-400">+</span> butonunu kullanabilirsin.
+          Yeni bir hedef belirlemek için{' '}
+          <span className="font-bold text-indigo-400">+ Yeni Görev</span> butonunu kullanabilirsin.
         </p>
       </div>
     );

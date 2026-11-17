@@ -75,6 +75,16 @@ export type PushSubscriptionRow = {
   created_at: string;
 };
 
+// ─── user_fcm_tokens tablosu ─────────────────────────────────
+export type UserFcmTokenRow = {
+  id: string;
+  user_id: string | null;
+  fcm_token: string;
+  device_label: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -113,6 +123,16 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<PushSubscriptionRow, 'id'>>;
+        Relationships: [];
+      };
+      user_fcm_tokens: {
+        Row: UserFcmTokenRow;
+        Insert: Omit<UserFcmTokenRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<UserFcmTokenRow, 'id'>>;
         Relationships: [];
       };
     };

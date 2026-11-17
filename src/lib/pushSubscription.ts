@@ -152,7 +152,7 @@ export async function savePushSubscriptionToSupabase(
         auth:         sub.keys.auth,
         device_label: deviceLabel,
         user_id:      userId ?? null,
-      } as any,
+      },
       { onConflict: 'endpoint' }
     );
 

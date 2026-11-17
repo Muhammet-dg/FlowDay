@@ -8,7 +8,6 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
-  MoveHorizontal,
 } from 'lucide-react';
 
 type TaskListProps = {
@@ -62,25 +61,16 @@ export function TaskList({
 
   return (
     <div className="px-5 pb-6">
-      {/* Bölüm Başlığı & Toplu Aksiyonlar */}
-      {tasks.length > 0 && (
+      {/* Bölüm Başlığı & Toplu Aksiyonlar (Tamamlanan Sekmesi) */}
+      {type === 'completed' && tasks.length > 0 && (
         <div className="flex items-center justify-between gap-2 mb-3.5 flex-wrap">
           <div className="flex items-center gap-2">
             <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.12em]">
-              {type === 'active'
-                ? `${tasks.length} Bekleyen Görev`
-                : `${tasks.length} Tamamlanan`}
+              {`${tasks.length} Tamamlanan`}
             </p>
-            {type === 'active' && (
-              <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-app-faint font-medium">
-                <MoveHorizontal size={10} />
-                Sağa: Tamamla · Sola: Sil
-              </span>
-            )}
           </div>
 
-          {type === 'completed' && tasks.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
               {/* Geri Yükle */}
               {onRestoreCompleted && (
                 <button
@@ -131,7 +121,6 @@ export function TaskList({
                 </button>
               )}
             </div>
-          )}
         </div>
       )}
 

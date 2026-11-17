@@ -68,9 +68,26 @@ export async function fetchUserProjects(userId: string): Promise<Project[]> {
     }
 
     const remote = ((data ?? []) as ProjectRow[]).map(rowToProject);
-    // Remote ve local veriyi birleştir (henüz senkronize olmamış local kayıtları koru)
+    // Remote ve local veriyi birleştir (henüz senkronize olmamış local kayıtları buluta aktar)
     const remoteIds = new Set(remote.map((r) => r.id));
     const unsyncedLocal = local.filter((l) => !remoteIds.has(l.id));
+    if (unsyncedLocal.length > 0) {
+      const syncPayloads: ProjectInsert[] = unsyncedLocal.map((p) => ({
+        id: p.id,
+        user_id: userId,
+        name: p.name,
+        color: p.color,
+        icon: p.icon,
+        description: p.description ?? null,
+        start_date: p.start_date ?? null,
+        target_date: p.target_date ?? null,
+        status: p.status,
+        milestones: p.milestones,
+        created_at: p.created_at,
+        updated_at: p.updated_at ?? p.created_at,
+      }));
+      await supabase.from('projects').upsert(syncPayloads, { onConflict: 'id' });
+    }
     const merged = [...unsyncedLocal, ...remote];
     saveLocalProjects(userId, merged);
     return merged;
@@ -187,6 +204,18 @@ export async function fetchUserLearnings(userId: string): Promise<Learning[]> {
     const remote = ((data ?? []) as LearningRow[]).map(rowToLearning);
     const remoteIds = new Set(remote.map((r) => r.id));
     const unsyncedLocal = local.filter((l) => !remoteIds.has(l.id));
+    if (unsyncedLocal.length > 0) {
+      const syncPayloads: LearningInsert[] = unsyncedLocal.map((l) => ({
+        id: l.id,
+        user_id: userId,
+        content: l.content,
+        project_id: l.project_id ?? null,
+        tags: l.tags,
+        learned_date: l.learned_date,
+        created_at: l.created_at,
+      }));
+      await supabase.from('learnings').upsert(syncPayloads, { onConflict: 'id' });
+    }
     const merged = [...unsyncedLocal, ...remote];
     saveLocalLearnings(userId, merged);
     return merged;

@@ -11,7 +11,7 @@ export function UndoToast({ taskTitle, onUndo, onDismiss }: UndoToastProps) {
     <div
       role="status"
       aria-live="polite"
-      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-sm select-none animate-slide-up"
+      className="fixed top-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-sm select-none animate-fade-in"
     >
       <div
         className="relative rounded-2xl px-3.5 py-2.5 border shadow-2xl overflow-hidden flex items-center gap-2.5"

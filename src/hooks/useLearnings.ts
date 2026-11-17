@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Learning, LearningFormData } from '../types';
+import type { LearningRow } from '../lib/supabase';
+import { rowToLearning, supabase } from '../lib/supabase';
 import {
   deleteUserLearning,
   fetchUserLearnings,
@@ -32,7 +34,47 @@ export function useLearnings({ userId }: UseLearningsOptions) {
 
   useEffect(() => {
     void loadLearnings();
-  }, [loadLearnings]);
+    if (!userId || userId.trim() === '') return;
+
+    const channel = supabase
+      .channel(`learnings-realtime-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'learnings', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const incoming = rowToLearning(payload.new as LearningRow);
+            setLearnings((prev) => {
+              if (prev.some((l) => l.id === incoming.id)) return prev;
+              const next = [incoming, ...prev];
+              saveLocalLearnings(userId, next);
+              return next;
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = rowToLearning(payload.new as LearningRow);
+            setLearnings((prev) => {
+              const next = prev.map((l) => (l.id === updated.id ? updated : l));
+              saveLocalLearnings(userId, next);
+              return next;
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id?: string }).id;
+            if (deletedId) {
+              setLearnings((prev) => {
+                const next = prev.filter((l) => l.id !== deletedId);
+                saveLocalLearnings(userId, next);
+                return next;
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadLearnings, userId]);
 
   const addLearning = useCallback(
     async (form: LearningFormData): Promise<Learning | null> => {

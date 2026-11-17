@@ -220,7 +220,7 @@ export async function saveFCMTokenToSupabase(
         fcm_token:    token,
         device_label: deviceLabel,
         updated_at:   new Date().toISOString(),
-      } as any,
+      },
       { onConflict: 'fcm_token' }
     );
 
@@ -321,7 +321,7 @@ export async function checkAndSaveFCMToken(
           fcm_token:    rawToken,
           device_label: navigator.userAgent.slice(0, 150) || 'Bilinmeyen Cihaz',
           updated_at:   new Date().toISOString(),
-        } as any,
+        },
         { onConflict: 'fcm_token' }
       );
 

@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Milestone, Project, ProjectFormData } from '../types';
+import type { ProjectRow } from '../lib/supabase';
+import { rowToProject, supabase } from '../lib/supabase';
 import {
   deleteUserProject,
   fetchUserProjects,
@@ -33,7 +35,47 @@ export function useProjects({ userId }: UseProjectsOptions) {
 
   useEffect(() => {
     void loadProjects();
-  }, [loadProjects]);
+    if (!userId || userId.trim() === '') return;
+
+    const channel = supabase
+      .channel(`projects-realtime-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'projects', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            const incoming = rowToProject(payload.new as ProjectRow);
+            setProjects((prev) => {
+              if (prev.some((p) => p.id === incoming.id)) return prev;
+              const next = [incoming, ...prev];
+              saveLocalProjects(userId, next);
+              return next;
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = rowToProject(payload.new as ProjectRow);
+            setProjects((prev) => {
+              const next = prev.map((p) => (p.id === updated.id ? updated : p));
+              saveLocalProjects(userId, next);
+              return next;
+            });
+          } else if (payload.eventType === 'DELETE') {
+            const deletedId = (payload.old as { id?: string }).id;
+            if (deletedId) {
+              setProjects((prev) => {
+                const next = prev.filter((p) => p.id !== deletedId);
+                saveLocalProjects(userId, next);
+                return next;
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [loadProjects, userId]);
 
   const addProject = useCallback(
     async (form: ProjectFormData): Promise<Project | null> => {

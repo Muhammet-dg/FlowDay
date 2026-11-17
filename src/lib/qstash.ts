@@ -61,12 +61,12 @@ export interface ScheduleResult {
  * @param params  Görev ve hatırlatıcı zamanı bilgileri
  * @returns       QStash yanıtı (messageId veya hata)
  */
+const DEFAULT_QSTASH_URL   = 'https://qstash.upstash.io/v2/publish/https://ooeowjpmoxjzxtwqwvtk.supabase.co/functions/v1/task-reminder-service';
+const DEFAULT_QSTASH_TOKEN = 'eyJVc2VySUQiOiIyOTljZjhmYS1iNDczLTQ1NGUtOWZhYS00OGM3NWUxM2YxYmUiLCJQYXNzd29yZCI6Ijg1NWU3ZWM2Y2E0OTQ5ODViNzYyNjEwOTBhY2Y1N2E3In0=';
+
 export async function scheduleTaskReminder(
   params: ScheduleReminderParams
 ): Promise<ScheduleResult> {
-  const DEFAULT_QSTASH_URL   = 'https://qstash.upstash.io/v2/publish/https://ooeowjpmoxjzxtwqwvtk.supabase.co/functions/v1/task-reminder-service';
-  const DEFAULT_QSTASH_TOKEN = 'eyJVc2VySUQiOiIyOTljZjhmYS1iNDczLTQ1NGUtOWZhYS00OGM3NWUxM2YxYmUiLCJQYXNzd29yZCI6Ijg1NWU3ZWM2Y2E0OTQ5ODViNzYyNjEwOTBhY2Y1N2E3In0=';
-
   const rawUrl   = (import.meta.env.VITE_QSTASH_URL   as string | undefined) || DEFAULT_QSTASH_URL;
   const rawToken = (import.meta.env.VITE_QSTASH_TOKEN as string | undefined) || DEFAULT_QSTASH_TOKEN;
 
@@ -205,7 +205,7 @@ export async function scheduleTaskReminder(
  * @param messageId  QStash messageId (scheduleTaskReminder'dan döner)
  */
 export async function cancelTaskReminder(messageId: string): Promise<void> {
-  const rawToken = import.meta.env.VITE_QSTASH_TOKEN as string | undefined;
+  const rawToken = (import.meta.env.VITE_QSTASH_TOKEN as string | undefined) || DEFAULT_QSTASH_TOKEN;
   const qstashToken = rawToken?.replace(/^"|"$/g, '').trim();
   if (!qstashToken || !messageId) return;
 

@@ -306,17 +306,7 @@ function App() {
           {/* ─── GÖREVLER SEKMESİ ─── */}
           {activeTab === 'tasks' && (
             <div>
-              {/* 1. Minimal & Sade Görev Girişi (Quick Capture) */}
-              <QuickCapture
-                onAdd={(data) => {
-                  void addTask(data);
-                }}
-                defaultCategory={resolvedDefaultCategory}
-                defaultProjectId={resolvedDefaultProjectId}
-                projects={projects}
-              />
-
-              {/* 2. Yatay Kaydırılan "Bugünkü Projelerim" Mini Kartları */}
+              {/* 1. Yatay Kaydırılan "Bugünkü Projelerim" Mini Kartları */}
               <TodayProjectsStrip
                 projects={projects}
                 tasks={tasks}
@@ -328,7 +318,7 @@ function App() {
                 }}
               />
 
-              {/* 3. Kategori & Proje Filtre Çipleri */}
+              {/* 2. Kategori & Proje Filtre Çipleri (Tam Genişlik) */}
               <CategoryPills
                 selected={selectedCategory}
                 onSelect={setSelectedCategory}
@@ -336,8 +326,25 @@ function App() {
                 projects={projects}
               />
 
+              {/* 3. Görevler Bölüm Başlığı + Sağ Köşede + Yeni Görev Butonu */}
+              <div className="px-5 mt-1 mb-3 flex items-center justify-between">
+                <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.12em]">
+                  {filteredActiveTasks.length > 0
+                    ? `${filteredActiveTasks.length} Bekleyen Görev`
+                    : 'Görevler'}
+                </p>
+                <QuickCapture
+                  onAdd={(data) => {
+                    void addTask(data);
+                  }}
+                  defaultCategory={resolvedDefaultCategory}
+                  defaultProjectId={resolvedDefaultProjectId}
+                  projects={projects}
+                />
+              </div>
+
               {/* 4. Görev Listesi */}
-              <div className="pt-1">
+              <div>
                 <TaskList
                   tasks={filteredActiveTasks}
                   projects={projects}

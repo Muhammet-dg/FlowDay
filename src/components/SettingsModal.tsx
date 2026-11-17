@@ -1,18 +1,14 @@
-import { useState } from 'react';
 import {
   X,
   LogOut,
   Sun,
   Moon,
   Bell,
-  Terminal,
-  ChevronDown,
   Flame,
   ShieldCheck,
 } from 'lucide-react';
 import type { Theme } from '../hooks/useTheme';
 import type { SubscriptionStatus } from '../hooks/useNotifications';
-import { TestNotificationButton } from './TestNotificationButton';
 
 type SettingsModalProps = {
   userEmail: string;
@@ -37,7 +33,6 @@ export function SettingsModal({
   onSignOut,
   onClose,
 }: SettingsModalProps) {
-  const [showDevMenu, setShowDevMenu] = useState(false);
   const avatarLetter = userEmail[0]?.toUpperCase() ?? 'K';
   const isDark = theme === 'dark';
 
@@ -210,46 +205,6 @@ export function SettingsModal({
             )}
           </div>
 
-          {/* Geliştirici Menüsü (Test Bildirimi) */}
-          <div
-            className="rounded-2xl border overflow-hidden transition-all"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <button
-              type="button"
-              onClick={() => setShowDevMenu((v) => !v)}
-              className="w-full p-3.5 flex items-center justify-between text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center"
-                  style={{ background: 'var(--surface-2)' }}
-                >
-                  <Terminal size={15} className="text-app-secondary" />
-                </div>
-                <div>
-                  <p className="text-app-primary text-xs font-semibold">Geliştirici Araçları</p>
-                  <p className="text-app-muted text-[11px]">Push bildirim testi ve tanılama</p>
-                </div>
-              </div>
-              <ChevronDown
-                size={15}
-                className={`text-app-muted transition-transform duration-200 ${
-                  showDevMenu ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-
-            {showDevMenu && (
-              <div
-                className="px-3.5 pb-3.5 pt-2 border-t animate-fade-in"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                <TestNotificationButton />
-              </div>
-            )}
-          </div>
-
           {/* Oturumu Kapat */}
           <button
             onClick={() => {
@@ -271,4 +226,3 @@ export function SettingsModal({
     </div>
   );
 }
-

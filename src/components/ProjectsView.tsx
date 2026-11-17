@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   FolderKanban,
   BookOpen,
@@ -923,17 +924,8 @@ export function ProjectsView({
               </div>
               <h3 className="text-app-primary font-bold text-sm">Henüz proje eklenmedi</h3>
               <p className="text-app-secondary text-xs mt-1 max-w-xs mx-auto">
-                Hedeflerini projelere bölerek kilometre taşlarını, alt görevleri ve günlük ilerlemeni takip et.
+                Hedeflerini projelere bölerek kilometre taşlarını, alt görevleri ve günlük ilerlemeni takip et. Sağ üstteki Yeni Proje butonuyla başlayabilirsin.
               </p>
-              <button
-                type="button"
-                onClick={() => setShowNewProjectModal(true)}
-                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white transition-all active:scale-95"
-                style={{ background: 'var(--primary)' }}
-              >
-                <Plus size={14} />
-                <span>İlk Projeyi Oluştur</span>
-              </button>
             </div>
           )}
         </div>
@@ -1135,186 +1127,193 @@ export function ProjectsView({
         </div>
       )}
 
-      {/* ─── YENİ PROJE OLUŞTURMA MODALI ─── */}
-      {showNewProjectModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-          <div
-            className="absolute inset-0 backdrop-blur-sm"
-            style={{ background: 'var(--overlay)' }}
-            onClick={() => setShowNewProjectModal(false)}
-          />
-          <div
-            className="relative w-full max-w-md border-t sm:border rounded-t-3xl sm:rounded-3xl pt-5 px-5 animate-slide-up shadow-2xl"
-            style={{
-              background: 'var(--sheet-bg)',
-              borderColor: 'var(--border-strong)',
-              paddingBottom: 'calc(1.75rem + env(safe-area-inset-bottom, 0px))',
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-app-muted text-[10px] font-bold uppercase tracking-widest">
-                  Yeni Hedef
-                </p>
-                <h2 className="text-app-primary text-lg font-bold">Proje Oluştur</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowNewProjectModal(false)}
-                className="w-8 h-8 rounded-xl flex items-center justify-center text-app-secondary"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-              >
-                <X size={15} />
-              </button>
-            </div>
-
-            <form onSubmit={(e) => void handleCreateProject(e)} className="space-y-3.5">
-              <input
-                type="text"
-                value={projName}
-                onChange={(e) => setProjName(e.target.value)}
-                placeholder="Proje adı (örn. Mobil Uygulama Lansmanı)"
-                maxLength={80}
-                required
-                className="select-text input-base"
-              />
-
-              <textarea
-                value={projDesc}
-                onChange={(e) => setProjDesc(e.target.value)}
-                placeholder="Kısa açıklama veya proje amacı (isteğe bağlı)"
-                rows={2}
-                maxLength={240}
-                className="select-text input-base resize-none"
-              />
-
-              {/* Renk Seçimi */}
-              <div>
-                <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
-                  Proje Rengi
-                </p>
-                <div className="flex items-center gap-2">
-                  {PROJECT_COLORS.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setProjColor(c.hex)}
-                      aria-label={c.label}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform active:scale-90"
-                      style={{
-                        background: c.hex,
-                        boxShadow: projColor === c.hex ? `0 0 0 2px var(--sheet-bg), 0 0 0 4px ${c.hex}` : 'none',
-                      }}
-                    >
-                      {projColor === c.hex && <Check size={14} className="text-white" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* İkon Seçimi */}
-              <div>
-                <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
-                  İkon
-                </p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {ICON_OPTIONS.map((opt) => {
-                    const active = projIcon === opt.id;
-                    return (
-                      <button
-                        key={opt.id}
-                        type="button"
-                        onClick={() => setProjIcon(opt.id)}
-                        className="py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-semibold transition-all active:scale-95"
-                        style={
-                          active
-                            ? {
-                                background: `${projColor}22`,
-                                color: projColor,
-                                border: `1px solid ${projColor}`,
-                              }
-                            : {
-                                background: 'var(--surface)',
-                                color: 'var(--text-secondary)',
-                                border: '1px solid var(--border)',
-                              }
-                        }
-                      >
-                        <ProjectIcon icon={opt.id} size={13} />
-                        <span>{opt.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Başlangıç & Hedef Tarih */}
-              <div className="grid grid-cols-2 gap-2.5">
+      {/* ─── YENİ PROJE OLUŞTURMA MODALI (Portal ile tam ekran üst katman) ─── */}
+      {showNewProjectModal &&
+        createPortal(
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 backdrop-blur-sm"
+              style={{ background: 'var(--overlay)' }}
+              onClick={() => setShowNewProjectModal(false)}
+            />
+            <div
+              className="relative w-full max-w-md max-h-[86dvh] overflow-y-auto border rounded-3xl pt-5 px-5 animate-scale-in shadow-2xl z-10"
+              style={{
+                background: 'var(--sheet-bg)',
+                borderColor: 'var(--border-strong)',
+                paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
+              }}
+            >
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <label className="text-app-muted text-[10px] font-bold uppercase tracking-wider block mb-1">
-                    Başlangıç Tarihi
-                  </label>
-                  <input
-                    type="date"
-                    value={projStartDate}
-                    onChange={(e) => setProjStartDate(e.target.value)}
-                    className="input-base !py-2 !text-xs"
-                  />
+                  <p className="text-app-muted text-[10px] font-bold uppercase tracking-widest">
+                    Yeni Hedef
+                  </p>
+                  <h2 className="text-app-primary text-lg font-bold">Proje Oluştur</h2>
                 </div>
-                <div>
-                  <label className="text-app-muted text-[10px] font-bold uppercase tracking-wider block mb-1">
-                    Hedef Tarih
-                  </label>
-                  <input
-                    type="date"
-                    value={projTargetDate}
-                    onChange={(e) => setProjTargetDate(e.target.value)}
-                    className="input-base !py-2 !text-xs"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNewProjectModal(false)}
+                  aria-label="Modalı kapat"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center text-app-secondary hover:text-app-primary transition-colors"
+                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                >
+                  <X size={15} />
+                </button>
               </div>
 
-              {/* Durum */}
-              <div>
-                <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
-                  Durum
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['active', 'on_hold', 'completed'] as const).map((st) => {
-                    const cfg = PROJECT_STATUS_CONFIG[st];
-                    const active = projStatus === st;
-                    return (
+              <form onSubmit={(e) => void handleCreateProject(e)} className="space-y-3.5">
+                <input
+                  type="text"
+                  value={projName}
+                  onChange={(e) => setProjName(e.target.value)}
+                  placeholder="Proje adı (örn. Mobil Uygulama Lansmanı)"
+                  maxLength={80}
+                  autoFocus
+                  required
+                  className="select-text input-base"
+                />
+
+                <textarea
+                  value={projDesc}
+                  onChange={(e) => setProjDesc(e.target.value)}
+                  placeholder="Kısa açıklama veya proje amacı (isteğe bağlı)"
+                  rows={2}
+                  maxLength={240}
+                  className="select-text input-base resize-none"
+                />
+
+                {/* Renk Seçimi */}
+                <div>
+                  <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
+                    Proje Rengi
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {PROJECT_COLORS.map((c) => (
                       <button
-                        key={st}
+                        key={c.id}
                         type="button"
-                        onClick={() => setProjStatus(st)}
-                        className={`py-2 rounded-xl text-xs font-bold transition-all ${
-                          active ? `${cfg.badgeBg} ${cfg.badgeText}` : 'text-app-muted'
-                        }`}
+                        onClick={() => setProjColor(c.hex)}
+                        aria-label={c.label}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-transform active:scale-90"
                         style={{
-                          background: active ? undefined : 'var(--surface)',
-                          border: '1px solid var(--border)',
+                          background: c.hex,
+                          boxShadow:
+                            projColor === c.hex
+                              ? `0 0 0 2px var(--sheet-bg), 0 0 0 4px ${c.hex}`
+                              : 'none',
                         }}
                       >
-                        {cfg.label}
+                        {projColor === c.hex && <Check size={14} className="text-white" />}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={!projName.trim()}
-                className="btn-primary w-full py-3.5"
-              >
-                <Plus size={16} />
-                <span>Projeyi Kaydet</span>
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+                {/* İkon Seçimi */}
+                <div>
+                  <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
+                    İkon
+                  </p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {ICON_OPTIONS.map((opt) => {
+                      const active = projIcon === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setProjIcon(opt.id)}
+                          className="py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 text-[11px] font-semibold transition-all active:scale-95"
+                          style={
+                            active
+                              ? {
+                                  background: `${projColor}22`,
+                                  color: projColor,
+                                  border: `1px solid ${projColor}`,
+                                }
+                              : {
+                                  background: 'var(--surface)',
+                                  color: 'var(--text-secondary)',
+                                  border: '1px solid var(--border)',
+                                }
+                          }
+                        >
+                          <ProjectIcon icon={opt.id} size={13} />
+                          <span>{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Başlangıç & Hedef Tarih */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <label className="text-app-muted text-[10px] font-bold uppercase tracking-wider block mb-1">
+                      Başlangıç Tarihi
+                    </label>
+                    <input
+                      type="date"
+                      value={projStartDate}
+                      onChange={(e) => setProjStartDate(e.target.value)}
+                      className="input-base !py-2 !text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-app-muted text-[10px] font-bold uppercase tracking-wider block mb-1">
+                      Hedef Tarih
+                    </label>
+                    <input
+                      type="date"
+                      value={projTargetDate}
+                      onChange={(e) => setProjTargetDate(e.target.value)}
+                      className="input-base !py-2 !text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Durum */}
+                <div>
+                  <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider mb-1.5">
+                    Durum
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['active', 'on_hold', 'completed'] as const).map((st) => {
+                      const cfg = PROJECT_STATUS_CONFIG[st];
+                      const active = projStatus === st;
+                      return (
+                        <button
+                          key={st}
+                          type="button"
+                          onClick={() => setProjStatus(st)}
+                          className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                            active ? `${cfg.badgeBg} ${cfg.badgeText}` : 'text-app-muted'
+                          }`}
+                          style={{
+                            background: active ? undefined : 'var(--surface)',
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          {cfg.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!projName.trim()}
+                  className="btn-primary w-full py-3.5"
+                >
+                  <Plus size={16} />
+                  <span>Projeyi Kaydet</span>
+                </button>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
