@@ -10,10 +10,10 @@
 [data-theme="dark"] {
   --bg:            #000000;   /* Saf derin zemin — animasyon için */
   --bg-2:          #080a10;   /* İkincil derin yüzey */
-  --surface:       rgba(22, 25, 34, 0.75);   /* Cam dokulu füme kart yüzeyi */
-  --surface-2:     rgba(31, 36, 48, 0.78);   /* İkincil kart / buton yüzeyi */
-  --surface-hover: rgba(37, 43, 57, 0.85);
-  --surface-alt:   rgba(22, 25, 34, 0.80);
+  --surface:       rgba(22, 25, 34, 0.88);   /* Cam dokulu füme kart yüzeyi */
+  --surface-2:     rgba(31, 36, 48, 0.90);   /* İkincil kart / buton yüzeyi */
+  --surface-hover: rgba(37, 43, 57, 0.94);
+  --surface-alt:   rgba(22, 25, 34, 0.88);
 
   /* %8 - %12 opaklıkta ince sınır çizgileri */
   --border:        rgba(255, 255, 255, 0.10);
@@ -527,7 +527,7 @@ body {
 }
 
 .animate-slide-up {
-  animation: slide-up 0.36s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: slide-up 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes scale-in {
@@ -542,7 +542,7 @@ body {
 }
 
 .animate-scale-in {
-  animation: scale-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: scale-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes task-in {
@@ -557,7 +557,7 @@ body {
 }
 
 .animate-task-in {
-  animation: task-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: task-in 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes fade-in {
@@ -572,7 +572,7 @@ body {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fade-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Float animasyonu — EmptyState için */
@@ -639,5 +639,32 @@ body {
   select,
   textarea {
     font-size: 16px !important;
+  }
+
+  /* Mobilde 60fps akıcılık için tam ekran backdrop-filter ve ağır katmanlı gradient yükünü azalt */
+  .rain-bg-container {
+    background-image:
+      radial-gradient(3px 80px at 0px 180px, rgba(99, 102, 241, 0.35), #0000),
+      radial-gradient(3px 80px at 150px 90px, rgba(16, 185, 129, 0.28), #0000),
+      radial-gradient(1.5px 1.5px at 75px 120px, rgba(56, 189, 248, 0.38) 100%, #0000 150%),
+      radial-gradient(3px 80px at 220px 210px, rgba(99, 102, 241, 0.30), #0000),
+      radial-gradient(1.5px 1.5px at 180px 45px, rgba(99, 102, 241, 0.32) 100%, #0000 150%),
+      radial-gradient(3px 80px at 280px 140px, rgba(56, 189, 248, 0.26), #0000);
+    background-size:
+      300px 220px,
+      300px 200px,
+      300px 220px,
+      300px 260px,
+      300px 180px,
+      300px 240px;
+    animation: none;
+    will-change: auto;
+  }
+
+  .rain-bg-container::after {
+    animation: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    opacity: 0.55;
   }
 }

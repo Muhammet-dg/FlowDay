@@ -350,11 +350,11 @@ function App() {
                   projects={projects}
                   type="active"
                   filteredCategoryName={filteredCategoryName}
-                  onToggle={(id) => void toggleTask(id)}
-                  onDelete={(id) => void deleteTask(id)}
-                  onSnooze={(id, mode) => void snoozeTask(id, mode)}
-                  onFocus={(task) => setFocusedTask(task)}
-                  onUpdateSubtasks={(taskId, subs) => void updateSubtasks(taskId, subs)}
+                  onToggle={toggleTask}
+                  onDelete={deleteTask}
+                  onSnooze={snoozeTask}
+                  onFocus={setFocusedTask}
+                  onUpdateSubtasks={updateSubtasks}
                 />
               </div>
             </div>
@@ -393,13 +393,13 @@ function App() {
                 archivedTasks={archivedTasks}
                 projects={projects}
                 type="completed"
-                onToggle={(id) => void toggleTask(id)}
-                onDelete={(id) => void deleteTask(id)}
-                onUpdateSubtasks={(taskId, subs) => void updateSubtasks(taskId, subs)}
-                onClearCompleted={() => void clearCompleted()}
-                onRestoreCompleted={() => void restoreCompleted()}
-                onArchiveCompleted={() => void archiveCompleted()}
-                onRestoreFromArchive={(id) => void restoreFromArchive(id)}
+                onToggle={toggleTask}
+                onDelete={deleteTask}
+                onUpdateSubtasks={updateSubtasks}
+                onClearCompleted={clearCompleted}
+                onRestoreCompleted={restoreCompleted}
+                onArchiveCompleted={archiveCompleted}
+                onRestoreFromArchive={restoreFromArchive}
                 onClearArchive={clearArchive}
               />
             </div>

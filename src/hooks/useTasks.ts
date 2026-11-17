@@ -87,6 +87,8 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   const [deletedTaskToast, setDeletedTaskToast] = useState<Task | null>(null);
 
   const isAddingRef = useRef(false);
+  const tasksRef = useRef<Task[]>(tasks);
+  tasksRef.current = tasks;
   const qstashMessageIds = useRef<Map<string, string>>(new Map());
   const pendingDeleteRef = useRef<{
     task: Task;
@@ -338,7 +340,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   // ── Görev tamamla / geri al ────────────────────────────────
   const toggleTask = useCallback(
     async (id: string) => {
-      const task = tasks.find((t) => t.id === id);
+      const task = tasksRef.current.find((t) => t.id === id);
       if (!task) return;
 
       const newCompleted = !task.completed;
@@ -384,13 +386,13 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
         setError(msg);
       }
     },
-    [tasks]
+    []
   );
 
   // ── Alt Görevleri (Subtasks) Güncelle ──────────────────────
   const updateSubtasks = useCallback(
     async (taskId: string, subtasks: Subtask[]) => {
-      const target = tasks.find((t) => t.id === taskId);
+      const target = tasksRef.current.find((t) => t.id === taskId);
       if (!target) return;
 
       saveLocalTaskMeta(taskId, {
@@ -412,13 +414,13 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
         // Şema henüz güncellenmediyse localStorage meta üzerinde kalır
       }
     },
-    [tasks]
+    []
   );
 
   // ── Görev ertele (Snooze) ───────────────────────────────────
   const snoozeTask = useCallback(
     async (id: string, mode: '1h' | 'tomorrow' = '1h') => {
-      const task = tasks.find((t) => t.id === id);
+      const task = tasksRef.current.find((t) => t.id === id);
       if (!task) return;
 
       const now = new Date();
@@ -471,13 +473,13 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
         setError(msg);
       }
     },
-    [tasks]
+    []
   );
 
   // ── Görev sil (5 sn Geri Al Toast ile) ──────────────────────
   const deleteTask = useCallback(
     async (id: string) => {
-      const deleted = tasks.find((t) => t.id === id);
+      const deleted = tasksRef.current.find((t) => t.id === id);
       if (!deleted) return;
 
       // Önceki bekleyen silme varsa hemen veritabanına uygula
@@ -500,7 +502,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
 
       pendingDeleteRef.current = { task: deleted, timerId };
     },
-    [tasks, commitDeleteToDb]
+    [commitDeleteToDb]
   );
 
   // ── Silinen görevi 5 sn içinde geri al ──────────────────────
