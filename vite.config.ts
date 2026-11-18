@@ -12,12 +12,13 @@ export default defineConfig({
       strategies: 'generateSW',
       // Üretimde SW'yi otomatik güncelle
       registerType: 'autoUpdate',
+      // globPatterns zaten tüm png ikonlarını precache ettiği için manifest ikonlarını mükerrer ekleme
+      includeManifestIcons: false,
       // Dev modunda da SW'yi etkinleştir (push test için)
       devOptions: {
         enabled: true,
         type: 'module',
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png', 'fonts/*.woff2'],
       manifest: {
         name: 'FlowDay',
         short_name: 'FlowDay',
@@ -48,12 +49,14 @@ export default defineConfig({
         ],
       },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // firebase-messaging-sw.js Workbox tarafından precache edilmemeli
-        // (FCM kendi SW lifecycle'ını yönetir)
-        globIgnores: ['firebase-messaging-sw.js'],
-        // Push bildirimi + notificationclick kodunu üretilen SW'ye dahil et
-        importScripts: ['/sw.js'],
+        // firebase-messaging-sw.js ve push-sw.js Workbox tarafından precache edilmemeli
+        globIgnores: ['firebase-messaging-sw.js', 'push-sw.js'],
+        // Push bildirimi + notificationclick kodunu üretilen /sw.js içine dahil et
+        importScripts: ['/push-sw.js'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,

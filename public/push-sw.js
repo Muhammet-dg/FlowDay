@@ -1,40 +1,20 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sw.js — FlowDay PWA Service Worker
-// Arka planda Web Push bildirimleri alır ve tıklamaları yönetir.
-// VitePWA (generateSW) bu dosyayı importScripts ile dahil eder.
+// push-sw.js — FlowDay Web Push & Bildirim Yardımcı Service Worker Betiği
+// VitePWA (generateSW) tarafından üretilen /sw.js içine importScripts ile dahil edilir.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SW_VERSION = '2.0.0';
+const SW_VERSION = '2.1.0';
 const APP_NAME = 'FlowDay';
 
-// ── Install ───────────────────────────────────────────────────────────────────
-self.addEventListener('install', () => {
-  // Bekleyen SW varsa hemen aktive et
-  self.skipWaiting();
-});
-
-// ── Activate ──────────────────────────────────────────────────────────────────
-self.addEventListener('activate', (event) => {
-  // Tüm açık sekmelerin kontrolünü hemen devral
-  event.waitUntil(self.clients.claim());
+// Yeni sürüm bildirimi "Yenile" butonundan gelen SKIP_WAITING mesajını dinle
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // ── Push ──────────────────────────────────────────────────────────────────────
-/**
- * QStash → Supabase Edge Function → Push endpoint üzerinden gelen push olayı.
- *
- * Beklenen JSON payload:
- * {
- *   "title":   "Görev Zamanı!",
- *   "body":    "\"Rapor hazırla\" görevini tamamlamayı unutma!",
- *   "icon":    "/icons/icon-192.png",
- *   "badge":   "/icons/icon-192.png",
- *   "tag":     "task-abc123",
- *   "data":    { "url": "/", "taskId": "abc123" }
- * }
- */
 self.addEventListener('push', (event) => {
-  // Varsayılan bildirim içeriği
   let payload = {
     title: APP_NAME,
     body: 'Yeni bir hatırlatıcınız var.',
@@ -44,13 +24,11 @@ self.addEventListener('push', (event) => {
     data: { url: '/' },
   };
 
-  // Sunucudan gelen JSON payload'ı ayrıştır
   if (event.data) {
     try {
       const incoming = event.data.json();
       payload = { ...payload, ...incoming };
     } catch {
-      // JSON değilse düz metin body olarak kullan
       payload.body = event.data.text();
     }
   }
@@ -63,7 +41,6 @@ self.addEventListener('push', (event) => {
     data: payload.data,
     requireInteraction: false,
     silent: false,
-    // iOS 16.4+ — vibrasyon desteği
     vibrate: [200, 100, 200],
   };
 
@@ -73,11 +50,6 @@ self.addEventListener('push', (event) => {
 });
 
 // ── Notification Click ────────────────────────────────────────────────────────
-/**
- * Kullanıcı bildirime tıkladığında:
- * 1. Zaten açık bir uygulama sekmesi varsa ona odaklan.
- * 2. Yoksa yeni sekme/pencere aç.
- */
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
@@ -87,14 +59,12 @@ self.addEventListener('notificationclick', (event) => {
     self.clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Uygulamanın açık bir sekmesi var mı?
         for (const client of clientList) {
           const clientPath = new URL(client.url).pathname;
           if (clientPath === targetUrl && 'focus' in client) {
             return client.focus();
           }
         }
-        // Açık sekme yoksa yeni pencere aç
         if (self.clients.openWindow) {
           return self.clients.openWindow(targetUrl);
         }
@@ -108,7 +78,6 @@ self.addEventListener('notificationclose', (event) => {
 });
 
 // ── Push Subscription Change ──────────────────────────────────────────────────
-// Tarayıcı aboneliği otomatik yenilediğinde tetiklenir (Chrome 60+)
 self.addEventListener('pushsubscriptionchange', (event) => {
   event.waitUntil(
     self.registration.pushManager
@@ -117,7 +86,6 @@ self.addEventListener('pushsubscriptionchange', (event) => {
         applicationServerKey: event.oldSubscription?.options?.applicationServerKey ?? null,
       })
       .then((newSub) => {
-        // Yeni aboneliği React tarafına ilet → Supabase'e kaydedilsin
         return self.clients.matchAll({ type: 'window' }).then((clients) => {
           clients.forEach((client) =>
             client.postMessage({

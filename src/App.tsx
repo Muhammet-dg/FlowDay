@@ -12,6 +12,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { FocusModal } from './components/FocusModal';
 import { Confetti } from './components/Confetti';
 import { UndoToast } from './components/UndoToast';
+import { PwaUpdateToast } from './components/PwaUpdateToast';
 import { BackgroundAnimation } from './components/BackgroundAnimation';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
@@ -279,6 +280,9 @@ function App() {
               </p>
             </div>
           )}
+
+        {/* ─── PWA Yeni Sürüm Bildirimi ─── */}
+        <PwaUpdateToast />
 
         {/* ─── Hata Banner'ı ─── */}
         {error && (
