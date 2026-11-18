@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import {
   TrendingUp,
   Target,
@@ -12,8 +12,6 @@ import {
   Layers,
   FolderKanban,
   BookOpen,
-  Download,
-  Upload,
   Check,
   Sparkles,
   ArrowUpRight,
@@ -24,7 +22,7 @@ import {
 import { CATEGORY_CONFIG, PRIORITY_CONFIG } from '../types';
 import type { Learning, Project, Routine, RoutineLog, Task } from '../types';
 import type { TaskStats } from '../hooks/useTasks';
-import { useStats, toDateStr } from '../hooks/useStats';
+import { useStats } from '../hooks/useStats';
 import type { StatsPeriod } from '../hooks/useStats';
 import { useRoutineStats } from '../hooks/useRoutineStats';
 
@@ -74,11 +72,8 @@ export function StatsView({
   routineLogs = [],
   userId,
   onToggleTask,
-  onImportData,
 }: StatsViewProps) {
   const [period, setPeriod] = useState<StatsPeriod>('week');
-  const [importStatus, setImportStatus] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     weekOffset,
@@ -91,7 +86,6 @@ export function StatsView({
     weeklyData,
     monthlyData,
     yearlyAndTableData,
-    allTasks,
   } = useStats(tasks, archivedTasks, projects, learnings);
 
   const routineStats = useRoutineStats(
@@ -111,50 +105,6 @@ export function StatsView({
     if (p === 'high') return stats.highPriority;
     if (p === 'medium') return stats.mediumPriority;
     return stats.lowPriority;
-  };
-
-  // JSON Dışa Aktarma
-  const handleExportJson = () => {
-    const payload: BackupPayload = {
-      version: 3,
-      exportedAt: new Date().toISOString(),
-      tasks: allTasks,
-      projects,
-      learnings,
-      routines,
-      routineLogs,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `flowday-yedek-${toDateStr(new Date())}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  // JSON İçe Aktarma
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as BackupPayload;
-      if (onImportData) {
-        await onImportData(parsed);
-      }
-      setImportStatus('Veriler başarıyla içe aktarıldı!');
-      setTimeout(() => setImportStatus(null), 3500);
-    } catch {
-      setImportStatus('Geçersiz JSON yedek dosyası.');
-      setTimeout(() => setImportStatus(null), 3500);
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
   };
 
   // Trend çizgisi SVG noktaları (Ay görünümü için)
@@ -1442,69 +1392,6 @@ export function StatsView({
           </div>
         </div>
       )}
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          VERİ YEDEKLEME: JSON DIŞA / İÇE AKTARMA
-         ═══════════════════════════════════════════════════════════════════════ */}
-      <div
-        className="rounded-3xl p-4 border"
-        style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-      >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div>
-            <p className="text-app-primary text-xs font-bold">
-              Veri Yedekleme (JSON Dışa / İçe Aktar)
-            </p>
-            <p className="text-app-muted text-[11px]">
-              Görevlerini, projelerini ve öğrenme notlarını yedekle veya geri yükle.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onClick={handleExportJson}
-            className="py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-            style={{
-              background: 'var(--surface-2)',
-              border: '1px solid var(--border-strong)',
-              color: 'var(--text-primary)',
-            }}
-          >
-            <Download size={14} className="text-indigo-400" />
-            <span>JSON Dışa Aktar</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
-            style={{
-              background: 'var(--primary-dim)',
-              border: '1px solid rgba(99, 102, 241, 0.30)',
-              color: 'var(--primary-light)',
-            }}
-          >
-            <Upload size={14} />
-            <span>JSON İçe Aktar</span>
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json"
-            onChange={(e) => void handleImportFile(e)}
-            className="hidden"
-          />
-        </div>
-
-        {importStatus && (
-          <p className="text-emerald-400 text-xs font-semibold mt-2.5 text-center animate-fade-in">
-            {importStatus}
-          </p>
-        )}
-      </div>
     </div>
   );
 }
