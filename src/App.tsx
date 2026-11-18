@@ -85,6 +85,7 @@ function App() {
     addTask,
     toggleTask,
     deleteTask,
+    editTask,
     undoDeleteTask,
     dismissDeleteToast,
     updateSubtasks,
@@ -281,7 +282,12 @@ function App() {
         )}
 
         {/* ─── Kaydırılabilir İçerik Alanı ─── */}
-        <div className="flex-1 overflow-y-auto overscroll-none pb-28">
+        <div
+          className="flex-1 overflow-y-auto overscroll-none"
+          style={{
+            paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom, 0px))',
+          }}
+        >
           {showHeader && (
             <Header
               activeCount={activeTasks.length}
@@ -306,42 +312,29 @@ function App() {
           {/* ─── GÖREVLER SEKMESİ ─── */}
           {activeTab === 'tasks' && (
             <div>
-              {/* 1. Yatay Kaydırılan "Bugünkü Projelerim" Mini Kartları */}
+              {/* 1. Kompakt Yatay Proje Çip Şeridi */}
               <TodayProjectsStrip
                 projects={projects}
                 tasks={tasks}
-                selectedCategory={selectedCategory}
-                onSelectProjectFilter={setSelectedCategory}
                 onOpenProjectDetail={(projectId) => {
                   setInitialProjectDetailId(projectId);
                   setActiveTab('projects');
                 }}
               />
 
-              {/* 2. Kategori & Proje Filtre Çipleri (Tam Genişlik) */}
+              {/* 2. Kategori Filtre Çipleri */}
               <CategoryPills
                 selected={selectedCategory}
                 onSelect={setSelectedCategory}
-                tasks={activeTasks}
-                projects={projects}
               />
 
-              {/* 3. Görevler Bölüm Başlığı + Sağ Köşede + Yeni Görev Butonu */}
-              <div className="px-5 mt-1 mb-3 flex items-center justify-between">
-                <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.12em]">
-                  {filteredActiveTasks.length > 0
-                    ? `${filteredActiveTasks.length} Bekleyen Görev`
-                    : 'Görevler'}
-                </p>
-                <QuickCapture
-                  onAdd={(data) => {
-                    void addTask(data);
-                  }}
-                  defaultCategory={resolvedDefaultCategory}
-                  defaultProjectId={resolvedDefaultProjectId}
-                  projects={projects}
-                />
-              </div>
+              {/* 3. Sade Tek Satırlık Görev Ekleme Alanı */}
+              <QuickCapture
+                onAdd={addTask}
+                defaultCategory={resolvedDefaultCategory}
+                defaultProjectId={resolvedDefaultProjectId}
+                projects={projects}
+              />
 
               {/* 4. Görev Listesi */}
               <div>
@@ -352,6 +345,7 @@ function App() {
                   filteredCategoryName={filteredCategoryName}
                   onToggle={toggleTask}
                   onDelete={deleteTask}
+                  onEdit={editTask}
                   onSnooze={snoozeTask}
                   onFocus={setFocusedTask}
                   onUpdateSubtasks={updateSubtasks}
@@ -467,9 +461,7 @@ function App() {
             if (t !== 'projects') setInitialProjectDetailId(null);
             setActiveTab(t);
           }}
-          activeCount={activeTasks.length}
-          completedCount={completedTasks.length}
-          projectCount={projects.filter((p) => p.status === 'active').length}
+          hasActiveTasks={activeTasks.length > 0}
         />
       </div>
 

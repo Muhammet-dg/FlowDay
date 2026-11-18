@@ -20,11 +20,11 @@
   --border-strong: rgba(255, 255, 255, 0.15);
   --border-focus:  rgba(99, 102, 241, 0.55);
 
-  /* WCAG uyumlu tipografi kontrastları */
+  /* WCAG AA/AAA uyumlu tipografi kontrastları */
   --text-primary:   #F3F4F6;   /* Kırık beyaz / yüksek okunabilirlik */
-  --text-secondary: #9CA3AF;   /* Dengeli gri-füme */
-  --text-muted:     #6B7280;   /* İkincil etiketler */
-  --text-faint:     #4B5563;   /* İnce detaylar */
+  --text-secondary: #B4BCC8;   /* Yüksek kontrastlı ikincil metin (WCAG AA+) */
+  --text-muted:     #8E98A8;   /* İkincil meta etiketler (WCAG AA) */
+  --text-faint:     #64748B;   /* İnce detaylar */
 
   /* Yüzen bar & modallar */
   --nav-bg:    rgba(22, 25, 34, 0.82);
@@ -65,9 +65,9 @@
   --border-focus:  rgba(79, 70, 229, 0.45);
 
   --text-primary:   #111318;   /* Derin mürekkep siyahı (WCAG AAA) */
-  --text-secondary: #4B5563;   /* Koyu arduvaz */
-  --text-muted:     #6B7280;   /* Orta gri */
-  --text-faint:     #9CA3AF;   /* Açık gri */
+  --text-secondary: #374151;   /* Koyu arduvaz (WCAG AA+) */
+  --text-muted:     #4B5563;   /* Orta koyu gri (WCAG AA) */
+  --text-faint:     #6B7280;   /* Yardımcı gri */
 
   --nav-bg:    rgba(255, 255, 255, 0.88);
   --input-bg:  #FFFFFF;
@@ -322,7 +322,7 @@ body {
     300px 158px, 300px 158px, 300px 158px,
     300px 210px, 300px 210px, 300px 210px;
   animation: rainFlow 95s linear infinite;
-  opacity: 0.92;
+  opacity: 0.45;
   will-change: background-position;
 }
 

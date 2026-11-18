@@ -18,6 +18,7 @@ type TaskListProps = {
   filteredCategoryName?: string;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit?: (id: string, title: string, note?: string) => void;
   onSnooze?: (id: string, mode: '1h' | 'tomorrow') => void;
   onFocus?: (task: Task) => void;
   onUpdateSubtasks?: (taskId: string, subtasks: Subtask[]) => void;
@@ -36,6 +37,7 @@ export function TaskList({
   filteredCategoryName,
   onToggle,
   onDelete,
+  onEdit,
   onSnooze,
   onFocus,
   onUpdateSubtasks,
@@ -60,38 +62,35 @@ export function TaskList({
   }
 
   return (
-    <div className="px-5 pb-6">
-      {/* Bölüm Başlığı & Toplu Aksiyonlar (Tamamlanan Sekmesi) */}
-      {type === 'completed' && tasks.length > 0 && (
-        <div className="flex items-center justify-between gap-2 mb-3.5 flex-wrap">
-          <div className="flex items-center gap-2">
-            <p className="text-app-muted text-[11px] font-semibold uppercase tracking-[0.12em]">
-              {`${tasks.length} Tamamlanan`}
-            </p>
-          </div>
+    <div className="px-4 pb-6">
+      {/* Küçük ve Soluk Bölüm Başlığı */}
+      {tasks.length > 0 && (
+        <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+          <p className="text-app-muted text-xs font-medium uppercase tracking-wider">
+            {type === 'active' ? 'Bekleyen Görevler' : 'Tamamlanan Görevler'}
+          </p>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
-              {/* Geri Yükle */}
+          {type === 'completed' && (
+            <div className="flex items-center gap-1.5 flex-wrap">
               {onRestoreCompleted && (
                 <button
                   onClick={onRestoreCompleted}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95 text-app-secondary hover:text-app-primary"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95 text-app-secondary hover:text-app-primary"
                   style={{
                     background: 'var(--surface)',
                     border: '1px solid var(--border)',
                   }}
                   title="Tamamlananları aktif listeye geri yükle"
                 >
-                  <RotateCcw size={11} />
+                  <RotateCcw size={12} />
                   <span>Geri Yükle</span>
                 </button>
               )}
 
-              {/* Arşive Taşı */}
               {onArchiveCompleted && (
                 <button
                   onClick={onArchiveCompleted}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95"
                   style={{
                     color: '#818CF8',
                     background: 'var(--primary-dim)',
@@ -99,16 +98,15 @@ export function TaskList({
                   }}
                   title="Tamamlananları arşive kaldır"
                 >
-                  <Archive size={11} />
+                  <Archive size={12} />
                   <span>Arşive Taşı</span>
                 </button>
               )}
 
-              {/* Tümünü Sil */}
               {onClearCompleted && (
                 <button
                   onClick={onClearCompleted}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95"
+                  className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition-all duration-150 active:scale-95"
                   style={{
                     color: '#F87171',
                     background: 'rgba(239, 68, 68, 0.08)',
@@ -116,17 +114,18 @@ export function TaskList({
                   }}
                   title="Kalıcı olarak temizle"
                 >
-                  <Trash2 size={11} />
+                  <Trash2 size={12} />
                   <span>Temizle</span>
                 </button>
               )}
             </div>
+          )}
         </div>
       )}
 
-      {/* Görev Kartları Listesi */}
+      {/* Görev Kartları Listesi (Kartlar arası boşluk 8px = space-y-2) */}
       {tasks.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {tasks.map((task) => (
             <TaskCard
               key={task.id}
@@ -134,6 +133,7 @@ export function TaskList({
               project={task.project_id ? projectMap.get(task.project_id) ?? null : null}
               onToggle={onToggle}
               onDelete={onDelete}
+              onEdit={onEdit}
               onSnooze={onSnooze}
               onFocus={onFocus}
               onUpdateSubtasks={onUpdateSubtasks}
@@ -162,7 +162,7 @@ export function TaskList({
               <button
                 type="button"
                 onClick={onClearArchive}
-                className="text-[11px] text-app-muted hover:text-red-400 font-medium transition-colors"
+                className="text-xs text-app-muted hover:text-red-400 font-medium transition-colors"
               >
                 Arşivi Boşalt
               </button>
@@ -189,7 +189,7 @@ export function TaskList({
                     <button
                       type="button"
                       onClick={() => onRestoreFromArchive(item.id)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-indigo-300 transition-transform active:scale-95 flex-shrink-0"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-300 transition-transform active:scale-95 flex-shrink-0"
                       style={{
                         background: 'var(--primary-dim)',
                       }}

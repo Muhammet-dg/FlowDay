@@ -38,6 +38,7 @@ type UseTasksReturn = {
   addTask: (data: TaskFormData) => Promise<void>;
   toggleTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  editTask: (id: string, title: string, note?: string) => Promise<void>;
   undoDeleteTask: () => void;
   dismissDeleteToast: () => void;
   updateSubtasks: (taskId: string, subtasks: Subtask[]) => Promise<void>;
@@ -389,6 +390,46 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     []
   );
 
+  // ── Görev başlık/not düzenle ────────────────────────────────
+  const editTask = useCallback(
+    async (id: string, title: string, note?: string) => {
+      const target = tasksRef.current.find((t) => t.id === id);
+      if (!target || !title.trim()) return;
+
+      const cleanTitle = title.trim();
+      const cleanNote = note?.trim() || undefined;
+      const encodedNote = encodeNoteWithCategory(cleanNote, target.category);
+
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, title: cleanTitle, note: cleanNote } : t
+        )
+      );
+
+      try {
+        const updatePayload: TaskUpdate = {
+          title: cleanTitle,
+          note: encodedNote,
+        };
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update(updatePayload)
+          .eq('id', id);
+
+        if (updateError) throw updateError;
+      } catch (err) {
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === id ? { ...t, title: target.title, note: target.note } : t
+          )
+        );
+        const msg = err instanceof Error ? err.message : 'Görev güncellenemedi';
+        setError(msg);
+      }
+    },
+    []
+  );
+
   // ── Alt Görevleri (Subtasks) Güncelle ──────────────────────
   const updateSubtasks = useCallback(
     async (taskId: string, subtasks: Subtask[]) => {
@@ -718,6 +759,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     addTask,
     toggleTask,
     deleteTask,
+    editTask,
     undoDeleteTask,
     dismissDeleteToast,
     updateSubtasks,

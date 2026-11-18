@@ -1,154 +1,114 @@
-import { Sparkles, CheckCircle2 } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 type ProgressWidgetProps = {
   activeCount: number;
   completedCount: number;
+  streak?: number;
 };
 
-const RING_SPARKLES = [
-  { tx: '22px', ty: '-18px', color: '#10B981', size: 4 },
-  { tx: '-22px', ty: '-16px', color: '#34D399', size: 3.5 },
-  { tx: '24px', ty: '14px', color: '#FBBF24', size: 3.5 },
-  { tx: '-20px', ty: '18px', color: '#6EE7B7', size: 4 },
-];
-
-export function ProgressWidget({ activeCount, completedCount }: ProgressWidgetProps) {
+export function ProgressWidget({
+  activeCount,
+  completedCount,
+  streak = 1,
+}: ProgressWidgetProps) {
   const total = activeCount + completedCount;
   const percentage = total > 0 ? Math.round((completedCount / total) * 100) : 0;
   const isAllDone = total > 0 && percentage === 100;
 
-  const getMotivationalQuote = () => {
-    if (total === 0) return 'Zihnini boşaltmak için ilk hedefini belirle.';
-    if (percentage === 100) return 'Muazzam! Bugünün tüm hedeflerini tamamladın.';
-    if (percentage >= 75) return 'Son düzlük, harika bir ritim yakaladın.';
-    if (percentage >= 40) return 'İstikrarlı ilerliyorsun, odağını koru.';
-    if (completedCount > 0) return 'İlk adım atıldı, devamı kendiliğinden gelecek.';
-    return 'Küçük bir görevle başla, ivme kazan.';
-  };
+  // Motivasyon mesajı yalnızca anlamlı anlarda (ilk görev bittiğinde veya %100 olduğunda) gösterilir
+  const milestoneMessage = (() => {
+    if (isAllDone) return 'Bugünün tüm görevleri tamamlandı!';
+    if (completedCount === 1 && activeCount > 0) return 'İlk görev tamam, harika başlangıç!';
+    return null;
+  })();
 
-  const radius = 22;
+  const radius = 15;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div
-      className="rounded-2xl p-4 border transition-all duration-300 relative overflow-hidden"
+      className="rounded-2xl px-3.5 py-2.5 border transition-colors duration-200 flex items-center gap-3 min-h-[56px]"
       style={{
         background: 'var(--surface)',
-        borderColor: isAllDone ? 'rgba(16, 185, 129, 0.38)' : 'var(--border)',
-        boxShadow: isAllDone ? '0 8px 28px rgba(16, 185, 129, 0.12)' : 'none',
+        borderColor: isAllDone ? 'rgba(16, 185, 129, 0.35)' : 'var(--border)',
       }}
     >
-      {isAllDone && (
-        <div
-          className="absolute inset-0 pointer-events-none animate-complete-sheen"
-          style={{
-            background:
-              'linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.14) 50%, transparent 100%)',
-          }}
-        />
-      )}
-
-      <div className="flex items-center gap-4 relative z-10">
-        {/* Dairesel İlerleme Halkası + %100 Kutlama */}
-        <div
-          className={`relative w-14 h-14 flex items-center justify-center flex-shrink-0 ${
-            isAllDone ? 'animate-ring-celebrate' : ''
+      {/* Sol: Küçük İlerleme Halkası (%0) */}
+      <div
+        className={`relative w-10 h-10 flex items-center justify-center flex-shrink-0 ${
+          isAllDone ? 'animate-ring-celebrate' : ''
+        }`}
+      >
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 38 38">
+          <circle
+            cx="19"
+            cy="19"
+            r={radius}
+            fill="none"
+            stroke="var(--surface-2)"
+            strokeWidth="3.5"
+          />
+          <circle
+            cx="19"
+            cy="19"
+            r={radius}
+            fill="none"
+            stroke={isAllDone ? '#10B981' : '#6366F1'}
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            className="transition-all duration-300 ease-out"
+          />
+        </svg>
+        <span
+          className={`absolute text-xs font-bold tabular-nums tracking-tight ${
+            isAllDone ? 'text-emerald-400' : 'text-app-primary'
           }`}
         >
-          {isAllDone && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              {RING_SPARKLES.map((sp, i) => (
-                <span
-                  key={i}
-                  className="absolute rounded-full animate-sparkle-burst"
-                  style={
-                    {
-                      '--tx': sp.tx,
-                      '--ty': sp.ty,
-                      width: `${sp.size}px`,
-                      height: `${sp.size}px`,
-                      backgroundColor: sp.color,
-                      boxShadow: `0 0 6px ${sp.color}`,
-                    } as React.CSSProperties
-                  }
-                />
-              ))}
-            </div>
-          )}
+          %{percentage}
+        </span>
+      </div>
 
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 54 54">
-            <circle
-              cx="27"
-              cy="27"
-              r={radius}
-              fill="none"
-              stroke="var(--surface-2)"
-              strokeWidth="4.5"
-            />
-            <circle
-              cx="27"
-              cy="27"
-              r={radius}
-              fill="none"
-              stroke={isAllDone ? '#10B981' : '#6366F1'}
-              strokeWidth="4.5"
-              strokeLinecap="round"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              className="transition-all duration-500 ease-out"
-            />
-          </svg>
-          <span
-            className={`absolute text-xs font-bold tracking-tight ${
-              isAllDone ? 'text-emerald-400' : 'text-app-primary'
-            }`}
-          >
-            %{percentage}
-          </span>
-        </div>
-
-        {/* Metin ve İnce Yatay İlerleme Çubuğu */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-app-primary text-sm font-semibold tracking-tight truncate">
-              {completedCount} tamamlandı,{' '}
-              <span className="text-app-secondary font-medium">{activeCount} bekliyor</span>
-            </p>
-            {isAllDone && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 flex-shrink-0 animate-scale-in">
-                <CheckCircle2 size={10} />
-                <span>Tamam!</span>
-              </span>
-            )}
-          </div>
-
-          {/* Yatay İnce İlerleme Çubuğu */}
-          <div
-            className="w-full h-1.5 rounded-full overflow-hidden mt-2 mb-2"
-            style={{ background: 'var(--surface-2)' }}
-          >
-            <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
-              style={{
-                width: `${percentage}%`,
-                background: isAllDone
-                  ? 'linear-gradient(90deg, #10B981, #34D399)'
-                  : 'linear-gradient(90deg, #6366F1, #818CF8)',
-              }}
-            />
-          </div>
-
-          {/* Motive Edici Editorial Söz */}
-          <p className="text-app-muted text-[11px] font-medium flex items-center gap-1.5 truncate">
-            <Sparkles
-              size={11}
-              className="flex-shrink-0"
-              style={{ color: isAllDone ? '#34D399' : '#818CF8' }}
-            />
-            <span className="truncate">{getMotivationalQuote()}</span>
+      {/* Orta: "X/Y tamamlandı" + İnce İlerleme Çubuğu (+ anlamlıysa kısa mesaj) */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-app-primary text-xs font-semibold tracking-tight truncate">
+            {total > 0 ? `${completedCount}/${total} tamamlandı` : 'Henüz görev yok'}
           </p>
+          {milestoneMessage && (
+            <span className="text-emerald-400 text-xs font-medium truncate">
+              {milestoneMessage}
+            </span>
+          )}
         </div>
+
+        <div
+          className="w-full h-1 rounded-full overflow-hidden mt-1.5"
+          style={{ background: 'var(--surface-2)' }}
+        >
+          <div
+            className="h-full rounded-full transition-all duration-300 ease-out"
+            style={{
+              width: `${percentage}%`,
+              background: isAllDone ? '#10B981' : '#6366F1',
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Sağ: Seri Bilgisi (🔥 6) */}
+      <div
+        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold flex-shrink-0"
+        style={{
+          background: 'rgba(245, 158, 11, 0.12)',
+          color: '#FBBF24',
+        }}
+        title={`${streak} günlük seri`}
+      >
+        <Flame size={13} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+        <span className="tabular-nums">{streak}</span>
       </div>
     </div>
   );

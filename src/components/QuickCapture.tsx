@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
   Plus,
   Clock,
@@ -7,6 +6,7 @@ import {
   X,
   FolderKanban,
   Flag,
+  Check,
 } from 'lucide-react';
 import type { Category, Priority, Project, TaskFormData } from '../types';
 import { CATEGORY_CONFIG, PRIORITY_CONFIG } from '../types';
@@ -16,6 +16,7 @@ type QuickCaptureProps = {
   defaultCategory?: Category;
   defaultProjectId?: string | null;
   projects?: Project[];
+  inputId?: string;
 };
 
 type ParsedTimeResult = {
@@ -62,9 +63,11 @@ export function QuickCapture({
   defaultCategory = 'personal',
   defaultProjectId = null,
   projects = [],
+  inputId = 'quick-capture-input',
 }: QuickCaptureProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>(defaultCategory);
   const [selectedPriority, setSelectedPriority] = useState<Priority>(
     defaultCategory === 'urgent' ? 'high' : 'medium'
@@ -77,6 +80,7 @@ export function QuickCapture({
   const [ignoreAutoTime, setIgnoreAutoTime] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSelectedCategory(defaultCategory);
@@ -88,27 +92,31 @@ export function QuickCapture({
   }, [defaultProjectId]);
 
   useEffect(() => {
-    if (!isOpen) return;
-    const timer = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 60);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsOpen(false);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node) &&
+        !text.trim()
+      ) {
+        setIsFocused(false);
+        setShowTimePresets(false);
+        setShowProjectPicker(false);
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen]);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [text]);
 
   const detectedTime = useMemo(() => {
     if (ignoreAutoTime || manualTime) return null;
     return parseNaturalTime(text);
   }, [text, ignoreAutoTime, manualTime]);
+
+  const cyclePriority = () => {
+    const idx = PRIORITIES.indexOf(selectedPriority);
+    const next = PRIORITIES[(idx + 1) % PRIORITIES.length];
+    setSelectedPriority(next);
+  };
 
   const applyPreset = (type: '1h' | '15:00' | '18:00' | '21:00' | 'tomorrow9') => {
     const now = new Date();
@@ -165,15 +173,10 @@ export function QuickCapture({
     inputRef.current?.focus();
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-    setShowTimePresets(false);
-    setShowProjectPicker(false);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) {
+      setIsFocused(true);
       inputRef.current?.focus();
       return;
     }
@@ -216,10 +219,17 @@ export function QuickCapture({
     setIgnoreAutoTime(false);
     setShowTimePresets(false);
     setShowProjectPicker(false);
-    setIsOpen(false);
+
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 240);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
+  const isExpanded = isFocused || Boolean(text.trim()) || showTimePresets || showProjectPicker;
   const activeTimeLabel = manualTime?.label ?? detectedTime?.label ?? null;
+  const prioConfig = PRIORITY_CONFIG[selectedPriority];
   const activeProjects = useMemo(
     () => projects.filter((p) => p.status !== 'completed'),
     [projects]
@@ -230,367 +240,283 @@ export function QuickCapture({
   );
 
   return (
-    <>
-      {/* ─── Köşe Tetikleyici Buton (+ Yeni Görev) ─── */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        aria-label="Yeni görev ekle"
-        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white transition-all duration-200 active:scale-95 flex-shrink-0 cursor-pointer select-none"
+    <div ref={containerRef} className="px-4 mb-3 select-none">
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-2xl border transition-colors duration-150 overflow-hidden"
         style={{
-          background: 'var(--primary)',
-          boxShadow: '0 6px 20px var(--primary-glow)',
+          background: 'var(--surface)',
+          borderColor: justAdded
+            ? '#10B981'
+            : isExpanded
+              ? 'var(--border-focus)'
+              : 'var(--border)',
         }}
       >
-        <Plus size={15} strokeWidth={2.5} aria-hidden="true" />
-        <span>Yeni Görev</span>
-      </button>
-
-      {/* ─── Ortalanmış Görev Ekleme Modalı ─── */}
-      {isOpen &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 select-none"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="quick-capture-modal-title"
+        {/* ─── Tek Satırlık Sade Giriş ("+ Yeni görev…") ─── */}
+        <div className="flex items-center gap-2 px-3 py-1.5 min-h-[44px]">
+          <button
+            type="submit"
+            aria-label="Görevi ekle"
+            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors duration-150 flex-shrink-0 cursor-pointer"
+            style={{
+              background: justAdded
+                ? '#10B981'
+                : text.trim()
+                  ? 'var(--primary)'
+                  : 'transparent',
+              color: text.trim() || justAdded ? '#ffffff' : 'var(--text-muted)',
+            }}
           >
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 backdrop-blur-sm"
-              style={{ background: 'var(--overlay)' }}
-              onClick={handleClose}
-            />
+            {justAdded ? (
+              <Check size={15} strokeWidth={2.6} aria-hidden="true" />
+            ) : (
+              <Plus size={16} strokeWidth={2.4} aria-hidden="true" />
+            )}
+          </button>
 
-            {/* Modal Kartı */}
-            <div
-              className="relative w-full max-w-md max-h-[86dvh] overflow-y-auto border rounded-3xl pt-5 px-5 animate-scale-in shadow-2xl z-10"
+          <input
+            id={inputId}
+            ref={inputRef}
+            type="text"
+            value={text}
+            onFocus={() => setIsFocused(true)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (ignoreAutoTime) setIgnoreAutoTime(false);
+            }}
+            placeholder="Yeni görev…"
+            aria-label="Yeni görev başlığı"
+            maxLength={120}
+            className="select-text flex-1 bg-transparent text-app-primary text-sm placeholder-app-muted outline-none min-w-0 font-medium"
+          />
+
+          {activeTimeLabel && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium flex-shrink-0"
               style={{
-                background: 'var(--sheet-bg)',
-                borderColor: 'var(--border-strong)',
-                paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
+                background: 'var(--primary-dim)',
+                color: 'var(--primary-light)',
               }}
             >
-              {/* Başlık */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-app-muted text-[10px] font-bold uppercase tracking-widest">
-                    Hızlı Ekle
-                  </p>
-                  <h2
-                    id="quick-capture-modal-title"
-                    className="text-app-primary text-lg font-bold tracking-tight"
-                  >
-                    Yeni Görev
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  aria-label="Modalı kapat"
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-app-secondary hover:text-app-primary transition-colors active:scale-90"
-                  style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
+              <Sparkles size={11} aria-hidden="true" />
+              <span>{activeTimeLabel}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (manualTime) setManualTime(null);
+                  else setIgnoreAutoTime(true);
+                }}
+                className="ml-0.5 hover:opacity-80 p-0.5"
+                aria-label="Saati kaldır"
+              >
+                <X size={11} />
+              </button>
+            </span>
+          )}
+        </div>
 
-              <form onSubmit={handleSubmit} className="space-y-3.5">
-                {/* ─── Sade Tek Satırlık Görev Girişi + Doğal Saat Rozeti ─── */}
-                <div
-                  className="flex items-center gap-2 rounded-2xl border px-3.5 py-2.5 transition-colors"
+        {/* ─── Focus Olunca Açılan Küçük Çipler (Kategori, Öncelik, Saat, Proje) ─── */}
+        {isExpanded && (
+          <div
+            className="px-3 py-2 border-t flex items-center gap-1.5 overflow-x-auto scrollbar-none animate-fade-in"
+            style={{
+              borderColor: 'var(--border)',
+              background: 'var(--bg-2)',
+            }}
+          >
+            {CATEGORIES.map((cat) => {
+              const cfg = CATEGORY_CONFIG[cat];
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategory(cat);
+                    if (cat === 'urgent') setSelectedPriority('high');
+                    inputRef.current?.focus();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-150 active:scale-95 flex-shrink-0 cursor-pointer"
+                  style={
+                    isSelected
+                      ? {
+                          background: 'var(--surface)',
+                          color: cfg.dotColor,
+                        }
+                      : {
+                          background: 'transparent',
+                          color: 'var(--text-secondary)',
+                        }
+                  }
+                >
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ background: isSelected ? cfg.dotColor : 'var(--text-faint)' }}
+                  />
+                  <span>{cfg.shortLabel}</span>
+                </button>
+              );
+            })}
+
+            <span className="w-px h-3.5 mx-0.5 flex-shrink-0" style={{ background: 'var(--border)' }} />
+
+            <button
+              type="button"
+              onClick={() => {
+                cyclePriority();
+                inputRef.current?.focus();
+              }}
+              title="Öncelik seviyesini değiştir"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-150 active:scale-95 flex-shrink-0 cursor-pointer"
+              style={{
+                background: 'var(--surface)',
+                color: prioConfig.hex,
+              }}
+            >
+              <Flag size={11} aria-hidden="true" />
+              <span>{prioConfig.label}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowTimePresets((v) => !v);
+                setShowProjectPicker(false);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-150 active:scale-95 flex-shrink-0 cursor-pointer"
+              style={{
+                background:
+                  showTimePresets || activeTimeLabel ? 'var(--primary-dim)' : 'var(--surface)',
+                color:
+                  showTimePresets || activeTimeLabel
+                    ? 'var(--primary-light)'
+                    : 'var(--text-secondary)',
+              }}
+            >
+              <Clock size={11} aria-hidden="true" />
+              <span>{activeTimeLabel ?? 'Saat'}</span>
+            </button>
+
+            {activeProjects.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProjectPicker((v) => !v);
+                  setShowTimePresets(false);
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-150 active:scale-95 max-w-[125px] flex-shrink-0 cursor-pointer"
+                style={{
+                  background: selectedProject ? `${selectedProject.color}18` : 'var(--surface)',
+                  color: selectedProject ? selectedProject.color : 'var(--text-secondary)',
+                }}
+              >
+                <FolderKanban size={11} className="flex-shrink-0" aria-hidden="true" />
+                <span className="truncate">
+                  {selectedProject ? selectedProject.name : 'Proje'}
+                </span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ─── Saat Seçenekleri ─── */}
+        {showTimePresets && (
+          <div
+            className="px-3 py-2 border-t flex items-center justify-between gap-1.5 flex-wrap animate-fade-in"
+            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+          >
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { id: '1h', label: '+1s' },
+                { id: '15:00', label: '15:00' },
+                { id: '18:00', label: '18:00' },
+                { id: '21:00', label: '21:00' },
+                { id: 'tomorrow9', label: 'Yarın 09:00' },
+              ].map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() =>
+                    applyPreset(
+                      preset.id as '1h' | '15:00' | '18:00' | '21:00' | 'tomorrow9'
+                    )
+                  }
+                  className="px-2.5 py-1 rounded-lg text-xs font-medium text-app-secondary hover:text-app-primary transition-colors active:scale-95"
                   style={{
-                    background: 'var(--input-bg)',
-                    borderColor: text.trim() ? 'var(--border-focus)' : 'var(--border-strong)',
+                    background: 'var(--surface-2)',
                   }}
                 >
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={text}
-                    onChange={(e) => {
-                      setText(e.target.value);
-                      if (ignoreAutoTime) setIgnoreAutoTime(false);
-                    }}
-                    placeholder="Yeni görev…"
-                    aria-label="Yeni görev başlığı"
-                    maxLength={120}
-                    className="select-text flex-1 bg-transparent text-app-primary text-sm placeholder-app-muted outline-none min-w-0 font-medium"
-                  />
-
-                  {activeTimeLabel && (
-                    <span
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold flex-shrink-0 animate-scale-in"
-                      style={{
-                        background: 'var(--primary-dim)',
-                        color: 'var(--primary-light)',
-                        border: '1px solid rgba(99, 102, 241, 0.25)',
-                      }}
-                    >
-                      <Sparkles size={10} aria-hidden="true" />
-                      <span>{activeTimeLabel}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (manualTime) setManualTime(null);
-                          else setIgnoreAutoTime(true);
-                        }}
-                        className="ml-0.5 hover:opacity-80 p-0.5"
-                        aria-label="Saati kaldır"
-                      >
-                        <X size={10} />
-                      </button>
-                    </span>
-                  )}
-                </div>
-
-                {/* ─── Kompakt Çipler: Kategori, Öncelik, Saat, Proje ─── */}
-                <div className="space-y-2.5">
-                  {/* Kategori Çipleri */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {CATEGORIES.map((cat) => {
-                      const cfg = CATEGORY_CONFIG[cat];
-                      const isSelected = selectedCategory === cat;
-                      return (
-                        <button
-                          key={cat}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCategory(cat);
-                            if (cat === 'urgent') setSelectedPriority('high');
-                            inputRef.current?.focus();
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer"
-                          style={
-                            isSelected
-                              ? {
-                                  background: 'var(--surface)',
-                                  border: `1px solid ${cfg.borderColor}`,
-                                  color: cfg.dotColor,
-                                }
-                              : {
-                                  background: 'var(--surface)',
-                                  border: '1px solid var(--border)',
-                                  color: 'var(--text-muted)',
-                                }
-                          }
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full"
-                            style={{ background: isSelected ? cfg.dotColor : 'var(--text-faint)' }}
-                          />
-                          <span>{cfg.shortLabel}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Öncelik, Saat ve Proje Çipleri */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {PRIORITIES.map((prio) => {
-                      const cfg = PRIORITY_CONFIG[prio];
-                      const isSelected = selectedPriority === prio;
-                      return (
-                        <button
-                          key={prio}
-                          type="button"
-                          onClick={() => {
-                            setSelectedPriority(prio);
-                            inputRef.current?.focus();
-                          }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer"
-                          style={
-                            isSelected
-                              ? {
-                                  background: `${cfg.hex}1A`,
-                                  border: `1px solid ${cfg.hex}55`,
-                                  color: cfg.hex,
-                                }
-                              : {
-                                  background: 'var(--surface)',
-                                  border: '1px solid var(--border)',
-                                  color: 'var(--text-muted)',
-                                }
-                          }
-                        >
-                          <Flag size={10} aria-hidden="true" />
-                          <span>{cfg.label}</span>
-                        </button>
-                      );
-                    })}
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowTimePresets((v) => !v);
-                        setShowProjectPicker(false);
-                      }}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-95 cursor-pointer"
-                      style={{
-                        background:
-                          showTimePresets || activeTimeLabel
-                            ? 'var(--primary-dim)'
-                            : 'var(--surface)',
-                        border:
-                          showTimePresets || activeTimeLabel
-                            ? '1px solid rgba(99, 102, 241, 0.35)'
-                            : '1px solid var(--border)',
-                        color:
-                          showTimePresets || activeTimeLabel
-                            ? 'var(--primary-light)'
-                            : 'var(--text-secondary)',
-                      }}
-                    >
-                      <Clock size={10} aria-hidden="true" />
-                      <span>{activeTimeLabel ?? 'Saat'}</span>
-                    </button>
-
-                    {activeProjects.length > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowProjectPicker((v) => !v);
-                          setShowTimePresets(false);
-                        }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-150 active:scale-95 max-w-[140px] cursor-pointer"
-                        style={{
-                          background: selectedProject
-                            ? `${selectedProject.color}18`
-                            : 'var(--surface)',
-                          border: selectedProject
-                            ? `1px solid ${selectedProject.color}45`
-                            : '1px solid var(--border)',
-                          color: selectedProject
-                            ? selectedProject.color
-                            : 'var(--text-secondary)',
-                        }}
-                      >
-                        <FolderKanban size={10} className="flex-shrink-0" aria-hidden="true" />
-                        <span className="truncate">
-                          {selectedProject ? selectedProject.name : 'Proje'}
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* ─── Saat / Hatırlatıcı Seçenekleri ─── */}
-                {showTimePresets && (
-                  <div
-                    className="p-3 rounded-2xl border flex items-center justify-between gap-2 flex-wrap animate-fade-in"
-                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-                  >
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      {[
-                        { id: '1h', label: '+1s' },
-                        { id: '15:00', label: '15:00' },
-                        { id: '18:00', label: '18:00' },
-                        { id: '21:00', label: '21:00' },
-                        { id: 'tomorrow9', label: 'Yarın 09:00' },
-                      ].map((preset) => (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() =>
-                            applyPreset(
-                              preset.id as '1h' | '15:00' | '18:00' | '21:00' | 'tomorrow9'
-                            )
-                          }
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-medium text-app-secondary hover:text-app-primary transition-all active:scale-95"
-                          style={{
-                            background: 'var(--surface-2)',
-                            border: '1px solid var(--border)',
-                          }}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <input
-                      type="time"
-                      value={customTimeValue}
-                      onChange={(e) => applyCustomTime(e.target.value)}
-                      aria-label="Özel hatırlatıcı saati"
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-app-primary outline-none"
-                      style={{
-                        background: 'var(--surface-2)',
-                        border: '1px solid var(--border)',
-                      }}
-                    />
-                  </div>
-                )}
-
-                {/* ─── Proje Seçici Çekmecesi ─── */}
-                {showProjectPicker && activeProjects.length > 0 && (
-                  <div
-                    className="p-3 rounded-2xl border flex items-center gap-1.5 flex-wrap animate-fade-in"
-                    style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedProjectId(null);
-                        setShowProjectPicker(false);
-                        inputRef.current?.focus();
-                      }}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all active:scale-95"
-                      style={{
-                        background:
-                          selectedProjectId === null ? 'var(--primary-dim)' : 'var(--surface-2)',
-                        color:
-                          selectedProjectId === null
-                            ? 'var(--primary-light)'
-                            : 'var(--text-muted)',
-                        border: '1px solid var(--border)',
-                      }}
-                    >
-                      Projesiz
-                    </button>
-                    {activeProjects.map((proj) => {
-                      const isSel = selectedProjectId === proj.id;
-                      return (
-                        <button
-                          key={proj.id}
-                          type="button"
-                          onClick={() => {
-                            setSelectedProjectId(proj.id);
-                            setShowProjectPicker(false);
-                            inputRef.current?.focus();
-                          }}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all active:scale-95"
-                          style={{
-                            background: isSel ? `${proj.color}22` : 'var(--surface-2)',
-                            color: isSel ? proj.color : 'var(--text-secondary)',
-                            border: isSel
-                              ? `1px solid ${proj.color}55`
-                              : '1px solid var(--border)',
-                          }}
-                        >
-                          <span
-                            className="w-2 h-2 rounded-full"
-                            style={{ background: proj.color }}
-                          />
-                          <span>{proj.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={!text.trim()}
-                  className="btn-primary w-full py-3.5"
-                >
-                  <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
-                  <span>Görevi Ekle</span>
+                  {preset.label}
                 </button>
-              </form>
+              ))}
             </div>
-          </div>,
-          document.body
+
+            <input
+              type="time"
+              value={customTimeValue}
+              onChange={(e) => applyCustomTime(e.target.value)}
+              aria-label="Özel hatırlatıcı saati"
+              className="px-2 py-1 rounded-lg text-xs font-semibold text-app-primary outline-none"
+              style={{
+                background: 'var(--surface-2)',
+              }}
+            />
+          </div>
         )}
-    </>
+
+        {/* ─── Proje Seçenekleri ─── */}
+        {showProjectPicker && activeProjects.length > 0 && (
+          <div
+            className="px-3 py-2 border-t flex items-center gap-1.5 flex-wrap animate-fade-in"
+            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedProjectId(null);
+                setShowProjectPicker(false);
+                inputRef.current?.focus();
+              }}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium transition-colors active:scale-95"
+              style={{
+                background:
+                  selectedProjectId === null ? 'var(--primary-dim)' : 'var(--surface-2)',
+                color:
+                  selectedProjectId === null ? 'var(--primary-light)' : 'var(--text-secondary)',
+              }}
+            >
+              Projesiz
+            </button>
+            {activeProjects.map((proj) => {
+              const isSel = selectedProjectId === proj.id;
+              return (
+                <button
+                  key={proj.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedProjectId(proj.id);
+                    setShowProjectPicker(false);
+                    inputRef.current?.focus();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors active:scale-95"
+                  style={{
+                    background: isSel ? `${proj.color}22` : 'var(--surface-2)',
+                    color: isSel ? proj.color : 'var(--text-secondary)',
+                  }}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ background: proj.color }}
+                  />
+                  <span>{proj.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </form>
+    </div>
   );
 }
