@@ -17,8 +17,8 @@ export function ProgressWidget({
 
   // Motivasyon mesajı yalnızca anlamlı anlarda (ilk görev bittiğinde veya %100 olduğunda) gösterilir
   const milestoneMessage = (() => {
-    if (isAllDone) return 'Bugünün tüm görevleri tamamlandı!';
-    if (completedCount === 1 && activeCount > 0) return 'İlk görev tamam, harika başlangıç!';
+    if (isAllDone) return 'Tümü tamamlandı!';
+    if (completedCount === 1 && activeCount > 0) return 'Harika başlangıç!';
     return null;
   })();
 
@@ -74,7 +74,7 @@ export function ProgressWidget({
       {/* Orta: "X/Y tamamlandı" + İnce İlerleme Çubuğu (+ anlamlıysa kısa mesaj) */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-app-primary text-xs font-semibold tracking-tight truncate">
+          <p className="text-app-primary text-xs font-semibold tracking-tight flex-shrink-0">
             {total > 0 ? `${completedCount}/${total} tamamlandı` : 'Henüz görev yok'}
           </p>
           {milestoneMessage && (

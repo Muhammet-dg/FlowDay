@@ -6,7 +6,6 @@ import { TodayProjectsStrip } from './components/TodayProjectsStrip';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { BottomNav } from './components/BottomNav';
-import { NotificationBanner } from './components/NotificationBanner';
 import { AuthScreen } from './components/AuthScreen';
 import { SettingsModal } from './components/SettingsModal';
 import { FocusModal } from './components/FocusModal';
@@ -52,7 +51,6 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [focusedTask, setFocusedTask] = useState<Task | null>(null);
-  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const { theme, toggleTheme } = useTheme();
 
@@ -128,13 +126,17 @@ function App() {
   );
 
   // ─── Bildirimler ───────────────────────────────────────────────────────────
-  const { permission, status: notifStatus, subscribe } = useNotifications({
+  const { permission, status: notifStatus, subscribe, unsubscribe } = useNotifications({
     userId: user?.id ?? null,
   });
 
   const handleSubscribe = useCallback(async () => {
     await subscribe();
   }, [subscribe]);
+
+  const handleUnsubscribe = useCallback(async () => {
+    await unsubscribe();
+  }, [unsubscribe]);
 
   // ─── Kategori & Proje Filtrelemesi ─────────────────────────────────────────
   const filteredActiveTasks = useMemo(() => {
@@ -173,12 +175,6 @@ function App() {
   }, [selectedCategory, projects]);
 
   const showHeader = activeTab === 'tasks' || activeTab === 'completed';
-
-  const showNotifBanner =
-    !bannerDismissed &&
-    notifStatus !== 'unsupported' &&
-    notifStatus !== 'subscribed' &&
-    permission !== 'granted';
 
   // ── Auth durumu henüz bilinmiyor → Splash ──────────────────────────────────
   if (authLoading) {
@@ -298,15 +294,6 @@ function App() {
               onToggleTheme={toggleTheme}
               userEmail={user?.email ?? ''}
               onOpenSettings={() => setShowSettings(true)}
-            />
-          )}
-
-          {/* Bildirim İzin Banner'ı */}
-          {showNotifBanner && (
-            <NotificationBanner
-              status={notifStatus}
-              onSubscribe={() => void handleSubscribe()}
-              onDismiss={() => setBannerDismissed(true)}
             />
           )}
 
@@ -497,6 +484,7 @@ function App() {
           notifPermission={permission}
           notifStatus={notifStatus}
           onSubscribeNotif={() => void handleSubscribe()}
+          onUnsubscribeNotif={() => void handleUnsubscribe()}
           onSignOut={() => void signOut()}
           onClose={() => setShowSettings(false)}
         />
