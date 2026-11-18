@@ -144,10 +144,17 @@ export function AuthScreen({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
-            <div className="relative">
+            <div
+              className="flex items-center gap-3 px-3.5 rounded-2xl border transition-all duration-200 focus-within:border-indigo-500/60"
+              style={{
+                background: 'var(--input-bg)',
+                borderColor: 'var(--border-strong)',
+              }}
+            >
               <Mail
-                size={15}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
+                size={16}
+                className="text-app-muted flex-shrink-0 pointer-events-none"
+                aria-hidden="true"
               />
               <input
                 ref={emailRef}
@@ -157,14 +164,21 @@ export function AuthScreen({
                 placeholder="E-posta adresi"
                 autoComplete="email"
                 required
-                className="select-text input-base pl-10 pr-4"
+                className="select-text flex-1 min-w-0 py-3.5 bg-transparent text-sm text-app-primary placeholder-app-muted outline-none border-0"
               />
             </div>
 
-            <div className="relative">
+            <div
+              className="flex items-center gap-3 px-3.5 rounded-2xl border transition-all duration-200 focus-within:border-indigo-500/60"
+              style={{
+                background: 'var(--input-bg)',
+                borderColor: 'var(--border-strong)',
+              }}
+            >
               <Lock
-                size={15}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-app-muted pointer-events-none"
+                size={16}
+                className="text-app-muted flex-shrink-0 pointer-events-none"
+                aria-hidden="true"
               />
               <input
                 type={showPass ? 'text' : 'password'}
@@ -174,15 +188,16 @@ export function AuthScreen({
                 autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 required
                 minLength={6}
-                className="select-text input-base pl-10 pr-11"
+                className="select-text flex-1 min-w-0 py-3.5 bg-transparent text-sm text-app-primary placeholder-app-muted outline-none border-0"
               />
               <button
                 type="button"
                 onClick={() => setShowPass((v) => !v)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-app-muted hover:text-app-secondary transition-colors p-1"
+                aria-label={showPass ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                className="text-app-muted hover:text-app-secondary transition-colors p-1.5 -mr-1 flex-shrink-0 cursor-pointer"
                 tabIndex={-1}
               >
-                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
