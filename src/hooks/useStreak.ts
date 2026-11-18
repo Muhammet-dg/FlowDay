@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Task } from '../types';
+import { addDaysStr, getIstanbulDateStr } from '../lib/routines';
 
 type StreakData = {
   count: number;
@@ -8,21 +9,19 @@ type StreakData = {
 };
 
 function getTodayStr(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return getIstanbulDateStr();
 }
 
 function getYesterdayStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return addDaysStr(getIstanbulDateStr(), -1);
 }
 
 export function useStreak(
   userId: string,
   activeCount: number,
   completedTasks: Task[],
-  archivedTasks: Task[]
+  archivedTasks: Task[],
+  completedRoutinesTodayCount = 0
 ) {
   const storageKey = `flowday_streak_v1_${userId || 'guest'}`;
 
@@ -43,6 +42,7 @@ export function useStreak(
         : { count: 3, lastCompletedDate: yesterday, celebratedDate: null };
 
       const hasCompletedToday =
+        completedRoutinesTodayCount > 0 ||
         completedTasks.some((t) => (t.completed_at ?? t.created_at).startsWith(today)) ||
         archivedTasks.some((t) => (t.completed_at ?? t.created_at).startsWith(today));
 
@@ -59,14 +59,15 @@ export function useStreak(
     } catch {
       setStreak(1);
     }
-  }, [userId, completedTasks, archivedTasks, storageKey]);
+  }, [userId, completedTasks, archivedTasks, completedRoutinesTodayCount, storageKey]);
 
-  // Tüm görevler tamamlandığında kutlama tetikle
+  // Tüm görevler ve bugünün planlı rutinleri tamamlandığında kutlama tetikle
   useEffect(() => {
     const prevActive = prevActiveRef.current;
     prevActiveRef.current = activeCount;
+    const totalDoneToday = completedTasks.length + completedRoutinesTodayCount;
 
-    if (prevActive !== null && prevActive > 0 && activeCount === 0 && completedTasks.length > 0) {
+    if (prevActive !== null && prevActive > 0 && activeCount === 0 && totalDoneToday > 0) {
       const today = getTodayStr();
       try {
         const raw = localStorage.getItem(storageKey);
@@ -98,7 +99,7 @@ export function useStreak(
       const timer = setTimeout(() => setShowCelebration(false), 4500);
       return () => clearTimeout(timer);
     }
-  }, [activeCount, completedTasks.length, storageKey, streak]);
+  }, [activeCount, completedTasks.length, completedRoutinesTodayCount, storageKey, streak]);
 
   const dismissCelebration = useCallback(() => {
     setShowCelebration(false);

@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { QuickCapture } from './components/QuickCapture';
 import { CategoryPills } from './components/CategoryPills';
 import { TodayProjectsStrip } from './components/TodayProjectsStrip';
+import { TodayRoutinesSection } from './components/TodayRoutinesSection';
 import { TaskList } from './components/TaskList';
 import { TaskForm } from './components/TaskForm';
 import { BottomNav } from './components/BottomNav';
@@ -15,6 +16,7 @@ import { BackgroundAnimation } from './components/BackgroundAnimation';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
 import { useLearnings } from './hooks/useLearnings';
+import { useRoutines } from './hooks/useRoutines';
 import { useNotifications } from './hooks/useNotifications';
 import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
@@ -48,6 +50,10 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>('tasks');
   const [selectedCategory, setSelectedCategory] = useState<FilterCategory>('all');
   const [initialProjectDetailId, setInitialProjectDetailId] = useState<string | null>(null);
+  const [initialProjectsSubView, setInitialProjectsSubView] = useState<
+    'projects' | 'routines' | 'learnings'
+  >('projects');
+  const [initialRoutineDetailId, setInitialRoutineDetailId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [focusedTask, setFocusedTask] = useState<Task | null>(null);
@@ -117,12 +123,29 @@ function App() {
     importLearnings,
   } = useLearnings({ userId });
 
-  // ─── Seri (Daily Streak) & Kutlama ─────────────────────────────────────────
+  // ─── Rutin Görevler hook'u ─────────────────────────────────────────────────
+  const {
+    routines,
+    routineLogs,
+    todayRoutines,
+    todayRoutineCounts,
+    routineStatsMap,
+    addRoutine,
+    updateRoutine,
+    setRoutineStatus,
+    toggleTodayRoutine,
+    incrementTodayRoutine,
+    skipTodayRoutine,
+    importRoutinesData,
+  } = useRoutines({ userId });
+
+  // ─── Seri (Daily Streak) & Kutlama (Görevler + Bugünün Planlı Rutinleri) ───
   const { streak, showCelebration, dismissCelebration } = useStreak(
     userId,
-    activeTasks.length,
+    activeTasks.length + todayRoutineCounts.pendingCount,
     completedTasks,
-    archivedTasks
+    archivedTasks,
+    todayRoutineCounts.doneCount
   );
 
   // ─── Bildirimler ───────────────────────────────────────────────────────────
@@ -287,8 +310,8 @@ function App() {
         >
           {showHeader && (
             <Header
-              activeCount={activeTasks.length}
-              completedCount={completedTasks.length}
+              activeCount={activeTasks.length + todayRoutineCounts.pendingCount}
+              completedCount={completedTasks.length + todayRoutineCounts.doneCount}
               streak={streak}
               theme={theme}
               onToggleTheme={toggleTheme}
@@ -305,6 +328,7 @@ function App() {
                 projects={projects}
                 tasks={tasks}
                 onOpenProjectDetail={(projectId) => {
+                  setInitialProjectsSubView('projects');
                   setInitialProjectDetailId(projectId);
                   setActiveTab('projects');
                 }}
@@ -324,7 +348,29 @@ function App() {
                 projects={projects}
               />
 
-              {/* 4. Görev Listesi */}
+              {/* 4. Bugünün Rutinleri ("Rutinler X/Y") */}
+              <TodayRoutinesSection
+                items={
+                  selectedCategory === 'all'
+                    ? todayRoutines
+                    : selectedCategory === 'urgent'
+                      ? todayRoutines.filter((item) => item.routine.category === 'urgent')
+                      : todayRoutines.filter((item) => item.routine.category === selectedCategory)
+                }
+                doneCount={todayRoutineCounts.doneCount}
+                totalPlanned={todayRoutineCounts.totalPlanned}
+                totalRoutinesCount={routines.filter((r) => r.status !== 'archived').length}
+                onToggle={(id) => void toggleTodayRoutine(id)}
+                onIncrement={(id) => void incrementTodayRoutine(id)}
+                onSkip={(id) => void skipTodayRoutine(id)}
+                onOpenManager={(routineId) => {
+                  setInitialProjectsSubView('routines');
+                  setInitialRoutineDetailId(routineId ?? null);
+                  setActiveTab('projects');
+                }}
+              />
+
+              {/* 5. Görev Listesi */}
               <div>
                 <TaskList
                   tasks={filteredActiveTasks}
@@ -343,15 +389,20 @@ function App() {
             </div>
           )}
 
-          {/* ─── PROJELER & ÖĞRENDİKLERİM SEKMESİ ─── */}
+          {/* ─── PROJELER, RUTİNLER & ÖĞRENDİKLERİM SEKMESİ ─── */}
           {activeTab === 'projects' && (
             <Suspense fallback={<TabFallbackSkeleton />}>
               <ProjectsView
                 projects={projects}
                 tasks={tasks}
                 learnings={learnings}
+                routines={routines}
+                routineStatsMap={routineStatsMap}
                 initialProjectId={initialProjectDetailId}
+                initialSubView={initialProjectsSubView}
+                initialRoutineId={initialRoutineDetailId}
                 onClearInitialProject={() => setInitialProjectDetailId(null)}
+                onClearInitialRoutine={() => setInitialRoutineDetailId(null)}
                 onAddProject={addProject}
                 onUpdateProject={updateProject}
                 onDeleteProject={deleteProject}
@@ -364,6 +415,9 @@ function App() {
                 onUpdateSubtasks={updateSubtasks}
                 onAddLearning={addLearning}
                 onDeleteLearning={deleteLearning}
+                onAddRoutine={addRoutine}
+                onUpdateRoutine={updateRoutine}
+                onSetRoutineStatus={setRoutineStatus}
               />
             </Suspense>
           )}
@@ -421,12 +475,18 @@ function App() {
                   archivedTasks={archivedTasks}
                   projects={projects}
                   learnings={learnings}
+                  routines={routines}
+                  routineLogs={routineLogs}
+                  userId={userId}
                   onToggleTask={(id) => void toggleTask(id)}
                   onDeleteTask={(id) => void deleteTask(id)}
                   onImportData={async (payload) => {
                     if (payload.projects) await importProjects(payload.projects);
                     if (payload.tasks) await importTasks(payload.tasks);
                     if (payload.learnings) await importLearnings(payload.learnings);
+                    if (payload.routines || payload.routineLogs) {
+                      await importRoutinesData(payload.routines, payload.routineLogs);
+                    }
                   }}
                 />
               </div>
@@ -447,10 +507,13 @@ function App() {
         <BottomNav
           activeTab={activeTab}
           onTabChange={(t) => {
-            if (t !== 'projects') setInitialProjectDetailId(null);
+            if (t !== 'projects') {
+              setInitialProjectDetailId(null);
+              setInitialRoutineDetailId(null);
+            }
             setActiveTab(t);
           }}
-          hasActiveTasks={activeTasks.length > 0}
+          hasActiveTasks={activeTasks.length + todayRoutineCounts.pendingCount > 0}
         />
       </div>
 

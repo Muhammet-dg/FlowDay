@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   FolderKanban,
@@ -17,6 +17,7 @@ import {
   Check,
   Flag,
   Layers,
+  Repeat,
 } from 'lucide-react';
 import type {
   Learning,
@@ -25,20 +26,30 @@ import type {
   ProjectFormData,
   ProjectIconName,
   ProjectStatus,
+  Routine,
+  RoutineFormData,
+  RoutineStatus,
   Subtask,
   Task,
   TaskFormData,
 } from '../types';
 import { PROJECT_COLORS, PROJECT_STATUS_CONFIG } from '../types';
+import type { SingleRoutineStats } from '../lib/routines';
 import { ProjectIcon } from './TodayProjectsStrip';
 import { TaskCard } from './TaskCard';
+import { RoutinesManagerView } from './RoutinesManagerView';
 
 type ProjectsViewProps = {
   projects: Project[];
   tasks: Task[];
   learnings: Learning[];
+  routines?: Routine[];
+  routineStatsMap?: Map<string, SingleRoutineStats>;
   initialProjectId?: string | null;
+  initialSubView?: 'projects' | 'routines' | 'learnings';
+  initialRoutineId?: string | null;
   onClearInitialProject?: () => void;
+  onClearInitialRoutine?: () => void;
   onAddProject: (data: ProjectFormData) => Promise<Project | null>;
   onUpdateProject: (id: string, updates: Partial<ProjectFormData>) => Promise<void>;
   onDeleteProject: (id: string) => Promise<void>;
@@ -51,6 +62,9 @@ type ProjectsViewProps = {
   onUpdateSubtasks: (taskId: string, subtasks: Subtask[]) => Promise<void>;
   onAddLearning: (data: LearningFormData) => Promise<Learning | null>;
   onDeleteLearning: (id: string) => Promise<void>;
+  onAddRoutine?: (form: RoutineFormData) => Promise<Routine | null>;
+  onUpdateRoutine?: (id: string, updates: Partial<RoutineFormData>) => Promise<void>;
+  onSetRoutineStatus?: (id: string, status: RoutineStatus) => Promise<void>;
 };
 
 const ICON_OPTIONS: Array<{ id: ProjectIconName; label: string }> = [
@@ -97,8 +111,13 @@ export function ProjectsView({
   projects,
   tasks,
   learnings,
+  routines = [],
+  routineStatsMap = new Map(),
   initialProjectId = null,
+  initialSubView = 'projects',
+  initialRoutineId = null,
   onClearInitialProject,
+  onClearInitialRoutine,
   onAddProject,
   onUpdateProject,
   onDeleteProject,
@@ -111,9 +130,16 @@ export function ProjectsView({
   onUpdateSubtasks,
   onAddLearning,
   onDeleteLearning,
+  onAddRoutine,
+  onUpdateRoutine,
+  onSetRoutineStatus,
 }: ProjectsViewProps) {
-  const [subView, setSubView] = useState<'projects' | 'learnings'>('projects');
+  const [subView, setSubView] = useState<'projects' | 'routines' | 'learnings'>(initialSubView);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(initialProjectId);
+
+  useEffect(() => {
+    setSubView(initialSubView);
+  }, [initialSubView]);
   const [statusFilter, setStatusFilter] = useState<'all' | ProjectStatus>('all');
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
 
@@ -707,12 +733,18 @@ export function ProjectsView({
             >
               {subView === 'projects' ? (
                 <FolderKanban size={16} className="text-indigo-400" />
+              ) : subView === 'routines' ? (
+                <Repeat size={16} className="text-amber-400" />
               ) : (
                 <BookOpen size={16} className="text-emerald-400" />
               )}
             </div>
             <h1 className="text-app-primary text-2xl font-bold tracking-tight">
-              {subView === 'projects' ? 'Projeler' : 'Öğrendiklerim'}
+              {subView === 'projects'
+                ? 'Projeler'
+                : subView === 'routines'
+                  ? 'Rutinler'
+                  : 'Öğrendiklerim'}
             </h1>
           </div>
         </div>
@@ -733,15 +765,15 @@ export function ProjectsView({
         )}
       </div>
 
-      {/* Alt Sekme Geçişi: Projelerim / Öğrendiklerim */}
+      {/* Alt Sekme Geçişi: Projeler / Rutinler / Öğrendiklerim */}
       <div
-        className="grid grid-cols-2 p-1 rounded-2xl border mb-4"
+        className="grid grid-cols-3 p-1 rounded-2xl border mb-4"
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
       >
         <button
           type="button"
           onClick={() => setSubView('projects')}
-          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
             subView === 'projects' ? 'text-white shadow-sm' : 'text-app-secondary'
           }`}
           style={
@@ -756,8 +788,24 @@ export function ProjectsView({
 
         <button
           type="button"
+          onClick={() => setSubView('routines')}
+          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+            subView === 'routines' ? 'text-white shadow-sm' : 'text-app-secondary'
+          }`}
+          style={
+            subView === 'routines'
+              ? { background: 'var(--primary)' }
+              : { background: 'transparent' }
+          }
+        >
+          <Repeat size={13} />
+          <span>Rutinler ({routines.filter((r) => r.status !== 'archived').length})</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setSubView('learnings')}
-          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
             subView === 'learnings' ? 'text-white shadow-sm' : 'text-app-secondary'
           }`}
           style={
@@ -770,6 +818,20 @@ export function ProjectsView({
           <span>Öğrendiklerim ({learnings.length})</span>
         </button>
       </div>
+
+      {/* ─── RUTİNLER YÖNETİMİ & DETAY GÖRÜNÜMÜ ─── */}
+      {subView === 'routines' && onAddRoutine && onUpdateRoutine && onSetRoutineStatus && (
+        <RoutinesManagerView
+          routines={routines}
+          projects={projects}
+          routineStatsMap={routineStatsMap}
+          initialRoutineId={initialRoutineId}
+          onClearInitialRoutine={onClearInitialRoutine}
+          onAddRoutine={onAddRoutine}
+          onUpdateRoutine={onUpdateRoutine}
+          onSetRoutineStatus={onSetRoutineStatus}
+        />
+      )}
 
       {/* ─── PROJELER LİSTESİ GÖRÜNÜMÜ ─── */}
       {subView === 'projects' && (

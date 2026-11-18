@@ -18,12 +18,15 @@ import {
   Sparkles,
   ArrowUpRight,
   ArrowDownRight,
+  Repeat,
+  AlertTriangle,
 } from 'lucide-react';
 import { CATEGORY_CONFIG, PRIORITY_CONFIG } from '../types';
-import type { Learning, Project, Task } from '../types';
+import type { Learning, Project, Routine, RoutineLog, Task } from '../types';
 import type { TaskStats } from '../hooks/useTasks';
 import { useStats, toDateStr } from '../hooks/useStats';
 import type { StatsPeriod } from '../hooks/useStats';
+import { useRoutineStats } from '../hooks/useRoutineStats';
 
 export type BackupPayload = {
   version: number;
@@ -31,6 +34,8 @@ export type BackupPayload = {
   tasks?: Task[];
   projects?: Project[];
   learnings?: Learning[];
+  routines?: Routine[];
+  routineLogs?: RoutineLog[];
   weeklyGoal?: number;
 };
 
@@ -41,6 +46,9 @@ type StatsViewProps = {
   archivedTasks?: Task[];
   projects?: Project[];
   learnings?: Learning[];
+  routines?: Routine[];
+  routineLogs?: RoutineLog[];
+  userId?: string;
   onToggleTask?: (id: string) => void;
   onDeleteTask?: (id: string) => void;
   onImportData?: (payload: BackupPayload) => Promise<void>;
@@ -62,6 +70,9 @@ export function StatsView({
   archivedTasks = [],
   projects = [],
   learnings = [],
+  routines = [],
+  routineLogs = [],
+  userId,
   onToggleTask,
   onImportData,
 }: StatsViewProps) {
@@ -87,6 +98,15 @@ export function StatsView({
     allTasks,
   } = useStats(tasks, archivedTasks, projects, learnings);
 
+  const routineStats = useRoutineStats(
+    routines,
+    routineLogs,
+    period,
+    weekOffset,
+    monthOffset,
+    userId
+  );
+
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (stats.completionRate / 100) * circumference;
@@ -100,11 +120,13 @@ export function StatsView({
   // JSON Dışa Aktarma
   const handleExportJson = () => {
     const payload: BackupPayload = {
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       tasks: allTasks,
       projects,
       learnings,
+      routines,
+      routineLogs,
       weeklyGoal,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -1175,6 +1197,342 @@ export function StatsView({
           })}
         </div>
       </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════════
+          RUTİN İSTATİSTİKLERİ (GÜN / HAFTA / AY ORANLARI, ISI HARİTASI & TABLO)
+         ═══════════════════════════════════════════════════════════════════════ */}
+      {routineStats.hasRoutines && (
+        <div
+          className="rounded-3xl p-4 border space-y-4"
+          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(245, 158, 11, 0.14)' }}
+              >
+                <Repeat size={15} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-app-primary text-xs font-bold">
+                  Rutin Takibi & Tutarlılık Analizi
+                </p>
+                <p className="text-app-muted text-[11px]">
+                  Bugün {routineStats.todayEval.totalDone}/{routineStats.todayEval.totalPlanned} rutin tamamlandı
+                </p>
+              </div>
+            </div>
+
+            {/* Dönem Karşılaştırma Rozeti (±%) */}
+            {(period === 'week' || period === 'month') && (
+              <span
+                className="inline-flex items-center gap-0.5 px-2 py-1 rounded-xl text-xs font-bold tabular-nums"
+                style={{
+                  background:
+                    (period === 'week'
+                      ? routineStats.weekDiffPct
+                      : routineStats.monthDiffPct) >= 0
+                      ? 'rgba(16, 185, 129, 0.14)'
+                      : 'rgba(239, 68, 68, 0.14)',
+                  color:
+                    (period === 'week'
+                      ? routineStats.weekDiffPct
+                      : routineStats.monthDiffPct) >= 0
+                      ? '#34D399'
+                      : '#FCA5A5',
+                }}
+              >
+                {(period === 'week'
+                  ? routineStats.weekDiffPct
+                  : routineStats.monthDiffPct) >= 0 ? (
+                  <ArrowUpRight size={12} />
+                ) : (
+                  <ArrowDownRight size={12} />
+                )}
+                <span>
+                  {(period === 'week'
+                    ? routineStats.weekDiffPct
+                    : routineStats.monthDiffPct) >= 0
+                    ? '+'
+                    : ''}
+                  {period === 'week'
+                    ? routineStats.weekDiffPct
+                    : routineStats.monthDiffPct}
+                  %
+                </span>
+              </span>
+            )}
+          </div>
+
+          {/* 3'lü Dönem Özeti: Bugün / Bu Hafta / Bu Ay */}
+          <div className="grid grid-cols-3 gap-2">
+            <div
+              className="rounded-2xl p-2.5 border"
+              style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}
+            >
+              <p className="text-app-muted text-[10px] font-semibold uppercase">Bugün</p>
+              <p className="text-app-primary text-base font-extrabold mt-0.5 tabular-nums">
+                %{routineStats.todayEval.overallRate}
+              </p>
+              <p className="text-app-secondary text-[11px] tabular-nums">
+                {routineStats.todayEval.totalDone}/{routineStats.todayEval.totalPlanned} yapıldı
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-2.5 border"
+              style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}
+            >
+              <p className="text-app-muted text-[10px] font-semibold uppercase">Haftalık</p>
+              <p className="text-app-primary text-base font-extrabold mt-0.5 tabular-nums">
+                %{routineStats.weekEval.overallRate}
+              </p>
+              <p className="text-app-secondary text-[11px] tabular-nums">
+                {routineStats.weekEval.totalDone}/{routineStats.weekEval.totalPlanned} yapıldı
+              </p>
+            </div>
+
+            <div
+              className="rounded-2xl p-2.5 border"
+              style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}
+            >
+              <p className="text-app-muted text-[10px] font-semibold uppercase">Aylık</p>
+              <p className="text-app-primary text-base font-extrabold mt-0.5 tabular-nums">
+                %{routineStats.monthEval.overallRate}
+              </p>
+              <p className="text-app-secondary text-[11px] tabular-nums">
+                {routineStats.monthEval.totalDone}/{routineStats.monthEval.totalPlanned} yapıldı
+              </p>
+            </div>
+          </div>
+
+          {/* Haftalık Görünüm: 7 Günlük Rutin Tamamlama Halkaları */}
+          {(period === 'week' || period === 'day') && (
+            <div>
+              <p className="text-app-secondary text-xs font-semibold mb-2">
+                Haftalık Rutin Tamamlama Şeridi
+              </p>
+              <div className="grid grid-cols-7 gap-1.5">
+                {routineStats.weekEval.days.map((d) => {
+                  const r = 12;
+                  const c = 2 * Math.PI * r;
+                  const off = c - (d.rate / 100) * c;
+                  return (
+                    <div
+                      key={d.dateStr}
+                      className="rounded-xl py-2 px-1 flex flex-col items-center gap-1 border"
+                      style={{
+                        background: d.isToday ? 'var(--primary-dim)' : 'var(--bg-2)',
+                        borderColor: d.isToday ? 'var(--primary)' : 'var(--border)',
+                        opacity: d.isFuture ? 0.45 : 1,
+                      }}
+                    >
+                      <span className="text-[10px] font-bold text-app-secondary">
+                        {d.shortLabel}
+                      </span>
+                      <div className="relative w-8 h-8 flex items-center justify-center">
+                        <svg className="w-full h-full -rotate-90" viewBox="0 0 30 30">
+                          <circle
+                            cx="15"
+                            cy="15"
+                            r={r}
+                            fill="none"
+                            stroke="var(--surface-2)"
+                            strokeWidth="2.8"
+                          />
+                          {d.planned > 0 && (
+                            <circle
+                              cx="15"
+                              cy="15"
+                              r={r}
+                              fill="none"
+                              stroke={d.rate === 100 ? '#10B981' : '#6366F1'}
+                              strokeWidth="2.8"
+                              strokeLinecap="round"
+                              strokeDasharray={c}
+                              strokeDashoffset={off}
+                            />
+                          )}
+                        </svg>
+                        <span className="absolute text-[9px] font-bold text-app-primary tabular-nums">
+                          {d.planned > 0 ? `${d.done}/${d.planned}` : '—'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Aylık Görünüm: Rutin Tamamlama Yoğunluğu Isı Haritası Takvimi */}
+          {period === 'month' && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-app-secondary text-xs font-semibold">
+                  Aylık Rutin Yoğunluk Isı Haritası
+                </p>
+                <span className="text-[10px] text-app-muted">
+                  Önceki aya göre {routineStats.monthDiffPct >= 0 ? '+' : ''}
+                  {routineStats.monthDiffPct}%
+                </span>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {WEEKDAY_HEADERS.map((h) => (
+                  <div
+                    key={h}
+                    className="text-center text-[10px] font-semibold text-app-muted"
+                  >
+                    {h}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: routineStats.monthLeadingBlanks }).map((_, i) => (
+                  <div key={`blank-${i}`} className="aspect-square" />
+                ))}
+                {routineStats.monthEval.days.map((d) => {
+                  const intensityBg =
+                    d.intensity === 4
+                      ? 'rgba(16, 185, 129, 0.45)'
+                      : d.intensity === 3
+                        ? 'rgba(16, 185, 129, 0.28)'
+                        : d.intensity === 2
+                          ? 'rgba(99, 102, 241, 0.25)'
+                          : d.intensity === 1
+                            ? 'rgba(245, 158, 11, 0.22)'
+                            : 'var(--bg-2)';
+
+                  return (
+                    <div
+                      key={d.dateStr}
+                      title={`${d.dateStr}: ${d.done}/${d.planned} rutin (%${d.rate})`}
+                      className="aspect-square rounded-lg flex flex-col items-center justify-center text-[11px] font-bold tabular-nums border"
+                      style={{
+                        background: intensityBg,
+                        borderColor: d.isToday ? 'var(--primary)' : 'var(--border)',
+                        color:
+                          d.intensity >= 3
+                            ? '#34D399'
+                            : d.isFuture
+                              ? 'var(--text-faint)'
+                              : 'var(--text-secondary)',
+                      }}
+                    >
+                      <span>{d.dayNum}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* En Tutarlı ve En Çok Aksayan Rutin */}
+          {(routineStats.mostConsistent || routineStats.mostMissed) && (
+            <div className="grid grid-cols-2 gap-2">
+              {routineStats.mostConsistent && (
+                <div
+                  className="rounded-2xl p-3 border"
+                  style={{
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    borderColor: 'rgba(16, 185, 129, 0.22)',
+                  }}
+                >
+                  <div className="flex items-center gap-1 text-emerald-400 text-[11px] font-bold">
+                    <Award size={12} />
+                    <span>En Tutarlı Rutin</span>
+                  </div>
+                  <p className="text-app-primary text-xs font-bold mt-1 truncate">
+                    {routineStats.mostConsistent.routine.icon}{' '}
+                    {routineStats.mostConsistent.routine.title}
+                  </p>
+                  <p className="text-emerald-300 text-xs font-semibold mt-0.5 tabular-nums">
+                    %{routineStats.mostConsistent.rate} ({routineStats.mostConsistent.done}/
+                    {routineStats.mostConsistent.planned})
+                  </p>
+                </div>
+              )}
+
+              {routineStats.mostMissed && (
+                <div
+                  className="rounded-2xl p-3 border"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    borderColor: 'rgba(245, 158, 11, 0.22)',
+                  }}
+                >
+                  <div className="flex items-center gap-1 text-amber-400 text-[11px] font-bold">
+                    <AlertTriangle size={12} />
+                    <span>En Çok Aksayan</span>
+                  </div>
+                  <p className="text-app-primary text-xs font-bold mt-1 truncate">
+                    {routineStats.mostMissed.routine.icon}{' '}
+                    {routineStats.mostMissed.routine.title}
+                  </p>
+                  <p className="text-amber-300 text-xs font-semibold mt-0.5 tabular-nums">
+                    %{routineStats.mostMissed.rate} ({routineStats.mostMissed.done}/
+                    {routineStats.mostMissed.planned})
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Rutin Bazlı Performans Tablosu */}
+          <div className="space-y-2 pt-1">
+            <p className="text-app-secondary text-xs font-semibold">
+              Rutin Bazlı İlerleme Tablosu
+            </p>
+            {routineStats.routineTable.map((row) => (
+              <div
+                key={row.routine.id}
+                className="rounded-2xl p-3 border flex items-center justify-between gap-3"
+                style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}
+              >
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <span className="text-base flex-shrink-0">{row.routine.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-app-primary text-xs font-bold truncate">
+                        {row.routine.title}
+                      </p>
+                      <span className="text-xs font-bold text-app-secondary tabular-nums flex-shrink-0">
+                        {row.done}/{row.planned} · %{row.rate}
+                      </span>
+                    </div>
+                    <div
+                      className="w-full h-1.5 rounded-full overflow-hidden mt-1.5"
+                      style={{ background: 'var(--surface-2)' }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${row.rate}%`,
+                          background: row.rate >= 80 ? '#10B981' : row.routine.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-bold tabular-nums flex-shrink-0"
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    color: '#FBBF24',
+                  }}
+                >
+                  <Flame size={11} className="fill-amber-400" />
+                  <span>{row.currentStreak}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════════
           VERİ YEDEKLEME: JSON DIŞA / İÇE AKTARMA

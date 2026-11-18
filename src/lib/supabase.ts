@@ -6,6 +6,11 @@ import type {
   Project,
   ProjectIconName,
   ProjectStatus,
+  Routine,
+  RoutineLog,
+  RoutineLogStatus,
+  RoutineRepeatType,
+  RoutineStatus,
   Subtask,
   Task,
 } from '../types';
@@ -64,6 +69,40 @@ export type LearningRow = {
   created_at: string;
 };
 
+// ─── routines tablosu ────────────────────────────────────────
+export type RoutineRow = {
+  id: string;
+  user_id: string;
+  title: string;
+  icon: string;
+  color: string;
+  category: Category;
+  project_id: string | null;
+  time: string | null;
+  reminder: boolean;
+  repeat_type: RoutineRepeatType;
+  repeat_days: number[];
+  target_count: number;
+  start_date: string;
+  end_date: string | null;
+  status: RoutineStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+// ─── routine_logs tablosu ────────────────────────────────────
+export type RoutineLogRow = {
+  id: string;
+  user_id: string;
+  routine_id: string;
+  date: string;
+  status: RoutineLogStatus;
+  count: number;
+  target_count: number;
+  completed_at: string | null;
+  created_at: string;
+};
+
 // ─── push_subscriptions tablosu ──────────────────────────────
 export type PushSubscriptionRow = {
   id: string;
@@ -114,6 +153,25 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<LearningRow, 'id'>>;
+        Relationships: [];
+      };
+      routines: {
+        Row: RoutineRow;
+        Insert: Omit<RoutineRow, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<RoutineRow, 'id'>>;
+        Relationships: [];
+      };
+      routine_logs: {
+        Row: RoutineLogRow;
+        Insert: Omit<RoutineLogRow, 'id' | 'created_at'> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<RoutineLogRow, 'id'>>;
         Relationships: [];
       };
       push_subscriptions: {
@@ -196,6 +254,42 @@ export function rowToLearning(row: LearningRow): Learning {
     project_id: row.project_id,
     tags: Array.isArray(row.tags) ? row.tags : [],
     learned_date: row.learned_date,
+    created_at: row.created_at,
+  };
+}
+
+export function rowToRoutine(row: RoutineRow): Routine {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    title: row.title,
+    icon: row.icon || '💧',
+    color: row.color || '#6366F1',
+    category: row.category || 'personal',
+    project_id: row.project_id ?? null,
+    time: row.time ?? null,
+    reminder: Boolean(row.reminder),
+    repeat_type: row.repeat_type || 'daily',
+    repeat_days: Array.isArray(row.repeat_days) ? row.repeat_days : [1, 2, 3, 4, 5, 6, 0],
+    target_count: Math.max(1, Number(row.target_count) || 1),
+    start_date: row.start_date,
+    end_date: row.end_date ?? null,
+    status: row.status || 'active',
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+export function rowToRoutineLog(row: RoutineLogRow): RoutineLog {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    routine_id: row.routine_id,
+    date: row.date,
+    status: row.status || 'pending',
+    count: Math.max(0, Number(row.count) || 0),
+    target_count: Math.max(1, Number(row.target_count) || 1),
+    completed_at: row.completed_at ?? null,
     created_at: row.created_at,
   };
 }

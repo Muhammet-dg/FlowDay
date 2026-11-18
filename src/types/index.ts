@@ -102,6 +102,82 @@ export type LearningFormData = {
   learned_date?: string;
 };
 
+// ─── Rutin Görevler (Routines & Routine Logs) Tipleri ───────────────────────
+
+export type RoutineRepeatType = 'daily' | 'weekdays' | 'weekends' | 'custom';
+
+export type RoutineStatus = 'active' | 'paused' | 'archived';
+
+export type RoutineLogStatus = 'pending' | 'done' | 'skipped';
+
+export type Routine = {
+  id: string;
+  user_id: string;
+  title: string;
+  icon: string;
+  color: string;
+  category: Category;
+  project_id?: string | null;
+  time?: string | null; // 'HH:MM'
+  reminder: boolean;
+  repeat_type: RoutineRepeatType;
+  repeat_days: number[]; // 0=Paz, 1=Pzt, 2=Sal, 3=Çar, 4=Per, 5=Cum, 6=Cmt
+  target_count: number;
+  start_date: string; // YYYY-MM-DD
+  end_date?: string | null; // YYYY-MM-DD
+  status: RoutineStatus;
+  created_at: string;
+  updated_at?: string;
+};
+
+export type RoutineFormData = {
+  title: string;
+  icon: string;
+  color: string;
+  category: Category;
+  project_id?: string | null;
+  time?: string | null;
+  reminder: boolean;
+  repeat_type: RoutineRepeatType;
+  repeat_days: number[];
+  target_count: number;
+  start_date: string;
+  end_date?: string | null;
+  status?: RoutineStatus;
+};
+
+export type RoutineLog = {
+  id: string;
+  user_id: string;
+  routine_id: string;
+  date: string; // YYYY-MM-DD
+  status: RoutineLogStatus;
+  count: number;
+  target_count: number;
+  completed_at?: string | null;
+  created_at: string;
+};
+
+export const ROUTINE_ICONS = [
+  '💧',
+  '📚',
+  '🏃',
+  '🧘',
+  '💻',
+  '🇬🇧',
+  '🍎',
+  '💊',
+  '✍️',
+  '🎯',
+] as const;
+
+export const ROUTINE_REPEAT_LABELS: Record<RoutineRepeatType, string> = {
+  daily: 'Her gün',
+  weekdays: 'Hafta içi',
+  weekends: 'Hafta sonu',
+  custom: 'Seçili günler',
+};
+
 export const PROJECT_STATUS_CONFIG: Record<
   ProjectStatus,
   { label: string; badgeBg: string; badgeText: string; dotColor: string }
