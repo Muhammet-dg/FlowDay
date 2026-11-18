@@ -187,7 +187,7 @@ const RoutineRowCard = memo(function RoutineRowCard({
           <span className="text-xs text-app-muted line-through truncate">
             {routine.title}
           </span>
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-surface text-app-muted">
+          <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-surface text-app-muted">
             Bugün atlandı
           </span>
         </div>
@@ -360,7 +360,7 @@ const RoutineRowCard = memo(function RoutineRowCard({
             </span>
 
             <span
-              className="px-1.5 py-0.2 rounded text-[10px] font-semibold flex-shrink-0"
+              className="px-1.5 py-0.2 rounded text-xs font-semibold flex-shrink-0"
               style={{
                 background: `${routine.color}18`,
                 color: routine.color,
@@ -370,8 +370,8 @@ const RoutineRowCard = memo(function RoutineRowCard({
             </span>
 
             {routine.time && (
-              <span className="inline-flex items-center gap-0.5 text-[11px] text-app-secondary tabular-nums flex-shrink-0">
-                <Clock size={10} aria-hidden="true" />
+              <span className="inline-flex items-center gap-0.5 text-xs text-app-secondary tabular-nums flex-shrink-0">
+                <Clock size={11} aria-hidden="true" />
                 <span>{routine.time}</span>
               </span>
             )}
@@ -392,7 +392,7 @@ const RoutineRowCard = memo(function RoutineRowCard({
                   }}
                 />
               </div>
-              <span className="text-[11px] font-semibold text-app-secondary tabular-nums">
+              <span className="text-xs font-semibold text-app-secondary tabular-nums">
                 {currentCount}/{targetCount}
               </span>
             </div>

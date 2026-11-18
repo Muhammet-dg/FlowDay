@@ -22,36 +22,36 @@ export function ProgressWidget({
     return null;
   })();
 
-  const radius = 15;
+  const radius = 17;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
     <div
-      className="rounded-2xl px-3.5 py-2.5 border transition-colors duration-200 flex items-center gap-3 min-h-[56px]"
+      className="rounded-2xl px-3.5 py-2.5 border transition-colors duration-200 flex items-center gap-3 min-h-[58px]"
       style={{
         background: 'var(--surface)',
         borderColor: isAllDone ? 'rgba(16, 185, 129, 0.35)' : 'var(--border)',
       }}
     >
-      {/* Sol: Küçük İlerleme Halkası (%0) */}
+      {/* Sol: Küçük İlerleme Halkası (%0..%100) */}
       <div
-        className={`relative w-10 h-10 flex items-center justify-center flex-shrink-0 ${
+        className={`relative w-11 h-11 flex items-center justify-center flex-shrink-0 ${
           isAllDone ? 'animate-ring-celebrate' : ''
         }`}
       >
-        <svg className="w-full h-full -rotate-90" viewBox="0 0 38 38">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 42 42">
           <circle
-            cx="19"
-            cy="19"
+            cx="21"
+            cy="21"
             r={radius}
             fill="none"
             stroke="var(--surface-2)"
             strokeWidth="3.5"
           />
           <circle
-            cx="19"
-            cy="19"
+            cx="21"
+            cy="21"
             r={radius}
             fill="none"
             stroke={isAllDone ? '#10B981' : '#6366F1'}

@@ -17,7 +17,7 @@ export default defineConfig({
         enabled: true,
         type: 'module',
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icons/*.png', 'fonts/*.woff2'],
       manifest: {
         name: 'FlowDay',
         short_name: 'FlowDay',
