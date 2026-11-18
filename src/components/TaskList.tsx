@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import type { Project, Subtask, Task } from '../types';
 import { TaskCard } from './TaskCard';
 import { EmptyState } from './EmptyState';
@@ -19,6 +19,7 @@ type TaskListProps = {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit?: (id: string, title: string, note?: string) => void;
+  onReorder?: (orderedIds: string[]) => void;
   onSnooze?: (id: string, mode: '1h' | 'tomorrow') => void;
   onFocus?: (task: Task) => void;
   onUpdateSubtasks?: (taskId: string, subtasks: Subtask[]) => void;
@@ -38,6 +39,7 @@ export function TaskList({
   onToggle,
   onDelete,
   onEdit,
+  onReorder,
   onSnooze,
   onFocus,
   onUpdateSubtasks,
@@ -48,6 +50,88 @@ export function TaskList({
   onClearArchive,
 }: TaskListProps) {
   const [showArchive, setShowArchive] = useState(false);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [orderedTasks, setOrderedTasks] = useState<Task[]>(tasks);
+
+  const orderedTasksRef = useRef<Task[]>(tasks);
+  orderedTasksRef.current = orderedTasks;
+  const draggingIdRef = useRef<string | null>(null);
+  draggingIdRef.current = draggingId;
+
+  useEffect(() => {
+    if (!draggingId) {
+      setOrderedTasks(tasks);
+    }
+  }, [tasks, draggingId]);
+
+  const canReorder = type === 'active' && Boolean(onReorder) && orderedTasks.length > 1;
+
+  const handleStartDrag = useCallback((taskId: string) => {
+    setDraggingId(taskId);
+  }, []);
+
+  const handleMoveToTop = useCallback(
+    (taskId: string) => {
+      if (!onReorder) return;
+      const currentIds = orderedTasksRef.current.map((t) => t.id);
+      const nextIds = [taskId, ...currentIds.filter((id) => id !== taskId)];
+      onReorder(nextIds);
+    },
+    [onReorder]
+  );
+
+  // Sürükleme aktifken pointer hareketlerini dinle ve kartları canlı yer değiştir
+  useEffect(() => {
+    if (!draggingId) return;
+
+    const handleWindowPointerMove = (e: PointerEvent) => {
+      const activeId = draggingIdRef.current;
+      if (!activeId) return;
+
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const cardWrapper = el?.closest('[data-task-id]') as HTMLElement | null;
+      const targetId = cardWrapper?.getAttribute('data-task-id');
+
+      if (!targetId || targetId === activeId) return;
+
+      setOrderedTasks((prev) => {
+        const fromIdx = prev.findIndex((t) => t.id === activeId);
+        const toIdx = prev.findIndex((t) => t.id === targetId);
+        if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
+
+        const next = [...prev];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try {
+            navigator.vibrate(8);
+          } catch {
+            // ignore
+          }
+        }
+        return next;
+      });
+    };
+
+    const finishWindowDrag = () => {
+      const finalOrder = orderedTasksRef.current.map((t) => t.id);
+      setDraggingId(null);
+      if (onReorder) {
+        onReorder(finalOrder);
+      }
+    };
+
+    window.addEventListener('pointermove', handleWindowPointerMove, { passive: true });
+    window.addEventListener('pointerup', finishWindowDrag);
+    window.addEventListener('pointercancel', finishWindowDrag);
+
+    return () => {
+      window.removeEventListener('pointermove', handleWindowPointerMove);
+      window.removeEventListener('pointerup', finishWindowDrag);
+      window.removeEventListener('pointercancel', finishWindowDrag);
+    };
+  }, [draggingId, onReorder]);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
@@ -124,13 +208,18 @@ export function TaskList({
       )}
 
       {/* Görev Kartları Listesi (Kartlar arası boşluk 8px = space-y-2) */}
-      {tasks.length > 0 ? (
+      {orderedTasks.length > 0 ? (
         <div className="space-y-2">
-          {tasks.map((task) => (
+          {orderedTasks.map((task, idx) => (
             <TaskCard
               key={task.id}
               task={task}
               project={task.project_id ? projectMap.get(task.project_id) ?? null : null}
+              isDragging={draggingId === task.id}
+              canReorder={canReorder}
+              isFirst={idx === 0}
+              onStartDrag={handleStartDrag}
+              onMoveToTop={handleMoveToTop}
               onToggle={onToggle}
               onDelete={onDelete}
               onEdit={onEdit}

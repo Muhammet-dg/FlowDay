@@ -12,6 +12,8 @@ import {
   MoreHorizontal,
   Pencil,
   X,
+  ArrowUpToLine,
+  GripVertical,
 } from 'lucide-react';
 import type { Project, Subtask, Task } from '../types';
 import { PRIORITY_CONFIG, CATEGORY_CONFIG } from '../types';
@@ -19,6 +21,11 @@ import { PRIORITY_CONFIG, CATEGORY_CONFIG } from '../types';
 type TaskCardProps = {
   task: Task;
   project?: Project | null;
+  isDragging?: boolean;
+  canReorder?: boolean;
+  isFirst?: boolean;
+  onStartDrag?: (taskId: string, clientY: number) => void;
+  onMoveToTop?: (taskId: string) => void;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit?: (id: string, title: string, note?: string) => void;
@@ -39,6 +46,11 @@ const SPARKLE_BURSTS = [
 export const TaskCard = memo(function TaskCard({
   task,
   project,
+  isDragging = false,
+  canReorder = false,
+  isFirst = false,
+  onStartDrag,
+  onMoveToTop,
   onToggle,
   onDelete,
   onEdit,
@@ -72,6 +84,14 @@ export const TaskCard = memo(function TaskCard({
   const startYRef = useRef<number | null>(null);
   const isHorizontalSwipeRef = useRef<boolean | null>(null);
   const didSwipeRef = useRef(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const priorityCfg = PRIORITY_CONFIG[task.priority];
   const categoryKey = task.category ?? (task.priority === 'high' ? 'urgent' : 'personal');
@@ -214,9 +234,9 @@ export const TaskCard = memo(function TaskCard({
     );
   };
 
-  // ── Pointer Handlers (60fps DOM Ref Swipe + Native Vertical Scroll) ─────────
+  // ── Pointer Handlers (60fps DOM Ref Swipe + Long-Press Reorder + Native Scroll) ──
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (deleting || justCompleted || exitingComplete || menuOpen || isEditing) return;
+    if (deleting || justCompleted || exitingComplete || menuOpen || isEditing || isDragging) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     const target = e.target as HTMLElement | null;
     if (target?.closest('button, input, textarea')) return;
@@ -226,6 +246,19 @@ export const TaskCard = memo(function TaskCard({
     isHorizontalSwipeRef.current = null;
     isDraggingRef.current = true;
     didSwipeRef.current = false;
+
+    clearLongPressTimer();
+    if (canReorder && onStartDrag && !task.completed) {
+      const initialY = e.clientY;
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTimerRef.current = null;
+        isDraggingRef.current = false;
+        didSwipeRef.current = true;
+        applySwipeVisuals(0, false);
+        triggerVibrate(22);
+        onStartDrag(task.id, initialY);
+      }, 280);
+    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -235,6 +268,10 @@ export const TaskCard = memo(function TaskCard({
 
     const deltaX = e.clientX - startXRef.current;
     const deltaY = e.clientY - startYRef.current;
+
+    if (Math.abs(deltaX) > 7 || Math.abs(deltaY) > 7) {
+      clearLongPressTimer();
+    }
 
     if (isHorizontalSwipeRef.current === null) {
       if (Math.abs(deltaY) > 8 && Math.abs(deltaY) >= Math.abs(deltaX)) {
@@ -255,6 +292,7 @@ export const TaskCard = memo(function TaskCard({
   };
 
   const finishPointerDrag = (cancelled: boolean) => {
+    clearLongPressTimer();
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
 
@@ -305,9 +343,11 @@ export const TaskCard = memo(function TaskCard({
 
   return (
     <div
+      data-task-id={task.id}
       className={`
         grid transition-[grid-template-rows,opacity,transform,margin] duration-200 ease-out select-none group
         ${!isExiting ? 'animate-task-in grid-rows-[1fr] opacity-100 scale-100' : ''}
+        ${isDragging ? 'z-30 scale-[1.02]' : ''}
         ${deleting ? 'grid-rows-[0fr] opacity-0 scale-95 -translate-x-4 !mt-0 !mb-0 pointer-events-none' : ''}
         ${exitingComplete && !deleting ? 'grid-rows-[0fr] opacity-0 scale-95 translate-x-4 !mt-0 !mb-0 pointer-events-none' : ''}
       `}
@@ -367,10 +407,15 @@ export const TaskCard = memo(function TaskCard({
           className={`
             relative rounded-2xl border transition-colors
             ${isVisuallyCompleted ? 'opacity-70 bg-surface/80' : 'bg-surface hover:bg-surface-hover'}
+            ${isDragging ? 'shadow-2xl ring-2 ring-indigo-500/50' : ''}
           `}
           style={{
-            borderColor: isVisuallyCompleted ? 'rgba(16, 185, 129, 0.30)' : 'var(--border)',
-            touchAction: 'pan-y',
+            borderColor: isDragging
+              ? 'var(--primary)'
+              : isVisuallyCompleted
+                ? 'rgba(16, 185, 129, 0.30)'
+                : 'var(--border)',
+            touchAction: isDragging ? 'none' : 'pan-y',
             willChange: 'transform',
           }}
         >
@@ -382,6 +427,24 @@ export const TaskCard = memo(function TaskCard({
 
           <div className="p-3.5 pl-3.5">
             <div className="flex items-center gap-2">
+              {/* ─── Sürükle-Bırak Tutamacı (Aktif görevlerde sıra değiştirmek için) ─── */}
+              {canReorder && onStartDrag && !task.completed && (
+                <button
+                  type="button"
+                  aria-label="Sıralamak için sürükle"
+                  title="Sürükleyerek sırala"
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    triggerVibrate(15);
+                    onStartDrag(task.id, e.clientY);
+                  }}
+                  style={{ touchAction: 'none' }}
+                  className="-ml-2 -mr-1.5 py-2 px-0.5 text-app-muted/50 hover:text-app-secondary active:text-indigo-400 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors"
+                >
+                  <GripVertical size={14} aria-hidden="true" />
+                </button>
+              )}
+
               {/* ─── Sol: Yuvarlak Onay Kutusu (44x44px Dokunma Alanı) ─── */}
               <div className="relative flex-shrink-0 -ml-1">
                 {justCompleted && (
@@ -617,6 +680,22 @@ export const TaskCard = memo(function TaskCard({
                           >
                             <Bell size={14} className="text-amber-400" aria-hidden="true" />
                             <span>Yarın 09:00’a Ertele</span>
+                          </button>
+                        )}
+
+                        {canReorder && !isFirst && onMoveToTop && (
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setMenuOpen(false);
+                              triggerVibrate(12);
+                              onMoveToTop(task.id);
+                            }}
+                            className="w-full px-3 py-2 rounded-xl text-xs font-medium text-app-primary hover:bg-surface flex items-center gap-2.5 text-left"
+                          >
+                            <ArrowUpToLine size={14} className="text-emerald-400" aria-hidden="true" />
+                            <span>En Üste Taşı</span>
                           </button>
                         )}
                       </>

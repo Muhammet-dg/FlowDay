@@ -19,39 +19,120 @@ type QuickCaptureProps = {
   inputId?: string;
 };
 
-type ParsedTimeResult = {
+type ParsedNaturalInput = {
   cleanTitle: string;
-  hour: number;
-  minute: number;
-  isTomorrow: boolean;
-  label: string;
-  matchedText: string;
-} | null;
+  time: {
+    hour: number;
+    minute: number;
+    isTomorrow: boolean;
+    label: string;
+  } | null;
+  priority: Priority | null;
+  category: Category | null;
+};
 
 /**
- * Doğal dilde saat algılama:
- * Örn: "Rapor yaz 15:00", "Yarın 09:30 ekip toplantısı", "Su iç 14.30"
+ * Doğal dilde tarih, saat, öncelik (!acil, !orta, !düşük) ve kategori (#iş, #kişisel, #acil) algılama.
+ * Örn: "Sunum hazırla yarın 15:00 !acil #iş", "Su iç +1s #kişisel", "Toplantı notları akşam !orta"
  */
-function parseNaturalTime(input: string): ParsedTimeResult {
-  const regex = /(?:(yarın|yarin)\s+)?\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/i;
-  const match = input.match(regex);
-  if (!match) return null;
+function parseNaturalInput(input: string): ParsedNaturalInput {
+  let working = input;
+  let detectedPriority: Priority | null = null;
+  let detectedCategory: Category | null = null;
+  let timeResult: ParsedNaturalInput['time'] = null;
 
-  const isTomorrow = Boolean(match[1]);
-  const hour = parseInt(match[2], 10);
-  const minute = parseInt(match[3], 10);
-  const formattedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-  const label = isTomorrow ? `Yarın ${formattedTime}` : formattedTime;
+  // 1. Öncelik algılama: !acil, !yüksek, !yuksek, !!!, !orta, !düşük, !dusuk
+  const prioRegex = /(?:^|\s)(!(?:acil|yüksek|yuksek|orta|düşük|dusuk)|!!!|!!)(?=\s|$)/i;
+  const prioMatch = working.match(prioRegex);
+  if (prioMatch) {
+    const token = prioMatch[1].toLowerCase();
+    if (token === '!acil' || token === '!yüksek' || token === '!yuksek' || token === '!!!' || token === '!!') {
+      detectedPriority = 'high';
+    } else if (token === '!orta') {
+      detectedPriority = 'medium';
+    } else if (token === '!düşük' || token === '!dusuk') {
+      detectedPriority = 'low';
+    }
+    working = working.replace(prioMatch[0], ' ');
+  }
 
-  const cleanTitle = input.replace(match[0], '').replace(/\s{2,}/g, ' ').trim();
+  // 2. Kategori algılama: #iş, #is, #proje, #kişisel, #kisisel, #ev, #acil
+  const catRegex = /(?:^|\s)#(iş|is|proje|kişisel|kisisel|ev|acil)\b/i;
+  const catMatch = working.match(catRegex);
+  if (catMatch) {
+    const token = catMatch[1].toLowerCase();
+    if (token === 'iş' || token === 'is' || token === 'proje') {
+      detectedCategory = 'work';
+    } else if (token === 'kişisel' || token === 'kisisel' || token === 'ev') {
+      detectedCategory = 'personal';
+    } else if (token === 'acil') {
+      detectedCategory = 'urgent';
+      if (!detectedPriority) detectedPriority = 'high';
+    }
+    working = working.replace(catMatch[0], ' ');
+  }
+
+  // 3. Saat ve tarih algılama:
+  // a) Açık saat: "(yarın|bugün)? 15:00" veya "14.30"
+  const explicitTimeRegex = /(?:(yarın|yarin|bugün|bugun)\s+)?\b([01]?\d|2[0-3])[:.]([0-5]\d)\b/i;
+  const explicitMatch = working.match(explicitTimeRegex);
+
+  if (explicitMatch) {
+    const dayWord = (explicitMatch[1] ?? '').toLowerCase();
+    const isTomorrow = dayWord === 'yarın' || dayWord === 'yarin';
+    const hour = parseInt(explicitMatch[2], 10);
+    const minute = parseInt(explicitMatch[3], 10);
+    const formattedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+    const label = isTomorrow ? `Yarın ${formattedTime}` : formattedTime;
+    working = working.replace(explicitMatch[0], ' ');
+    timeResult = { hour, minute, isTomorrow, label };
+  } else {
+    // b) "+1s" veya "1 saat sonra"
+    const relHourRegex = /(?:^|\s)(\+1s|1\s+saat\s+sonra)\b/i;
+    const relMatch = working.match(relHourRegex);
+    if (relMatch) {
+      const target = new Date();
+      target.setHours(target.getHours() + 1);
+      const hour = target.getHours();
+      const minute = target.getMinutes();
+      const label = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      working = working.replace(relMatch[0], ' ');
+      timeResult = { hour, minute, isTomorrow: false, label };
+    } else {
+      // c) "yarın sabah", "yarın akşam", "yarın", "bu akşam", "akşam", "sabah", "öğlen"
+      const namedTimeRegex =
+        /(?:^|\s)(?:(yarın|yarin)\s*(sabah|öğlen|oglen|akşam|aksam|gece)?|(bu\s+)?(sabah|öğlen|oglen|akşam|aksam|gece))\b/i;
+      const namedMatch = working.match(namedTimeRegex);
+      if (namedMatch) {
+        const isTomorrow = Boolean(namedMatch[1]);
+        const period = (namedMatch[2] || namedMatch[4] || '').toLowerCase();
+        let hour = 9;
+        let minute = 0;
+        if (period === 'öğlen' || period === 'oglen') {
+          hour = 12;
+          minute = 30;
+        } else if (period === 'akşam' || period === 'aksam') {
+          hour = 19;
+          minute = 0;
+        } else if (period === 'gece') {
+          hour = 21;
+          minute = 30;
+        }
+        const formattedTime = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+        const label = isTomorrow ? `Yarın ${formattedTime}` : formattedTime;
+        working = working.replace(namedMatch[0], ' ');
+        timeResult = { hour, minute, isTomorrow, label };
+      }
+    }
+  }
+
+  const cleanTitle = working.replace(/\s{2,}/g, ' ').trim();
 
   return {
     cleanTitle: cleanTitle || input.trim(),
-    hour,
-    minute,
-    isTomorrow,
-    label,
-    matchedText: match[0],
+    time: timeResult,
+    priority: detectedPriority,
+    category: detectedCategory,
   };
 }
 
@@ -107,13 +188,20 @@ export function QuickCapture({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [text]);
 
+  const parsedNatural = useMemo(() => parseNaturalInput(text), [text]);
+
   const detectedTime = useMemo(() => {
     if (ignoreAutoTime || manualTime) return null;
-    return parseNaturalTime(text);
-  }, [text, ignoreAutoTime, manualTime]);
+    return parsedNatural.time;
+  }, [parsedNatural.time, ignoreAutoTime, manualTime]);
+
+  const effectiveCategory: Category = parsedNatural.category ?? selectedCategory;
+  const effectivePriority: Priority =
+    parsedNatural.priority ??
+    (parsedNatural.category === 'urgent' ? 'high' : selectedPriority);
 
   const cyclePriority = () => {
-    const idx = PRIORITIES.indexOf(selectedPriority);
+    const idx = PRIORITIES.indexOf(effectivePriority);
     const next = PRIORITIES[(idx + 1) % PRIORITIES.length];
     setSelectedPriority(next);
   };
@@ -181,13 +269,17 @@ export function QuickCapture({
       return;
     }
 
-    let finalTitle = text.trim();
+    const hasNaturalTokens =
+      Boolean(detectedTime) ||
+      Boolean(parsedNatural.priority) ||
+      Boolean(parsedNatural.category);
+
+    const finalTitle = hasNaturalTokens ? parsedNatural.cleanTitle : text.trim();
     let reminderIso: string | null = null;
 
     if (manualTime) {
       reminderIso = manualTime.iso;
     } else if (detectedTime) {
-      finalTitle = detectedTime.cleanTitle;
       const now = new Date();
       const target = new Date(
         now.getFullYear(),
@@ -205,10 +297,10 @@ export function QuickCapture({
     }
 
     onAdd({
-      title: finalTitle,
+      title: finalTitle || text.trim(),
       note: '',
-      priority: selectedPriority,
-      category: selectedCategory,
+      priority: effectivePriority,
+      category: effectiveCategory,
       project_id: selectedProjectId,
       reminder_time: reminderIso,
     });
@@ -229,7 +321,7 @@ export function QuickCapture({
 
   const isExpanded = isFocused || Boolean(text.trim()) || showTimePresets || showProjectPicker;
   const activeTimeLabel = manualTime?.label ?? detectedTime?.label ?? null;
-  const prioConfig = PRIORITY_CONFIG[selectedPriority];
+  const prioConfig = PRIORITY_CONFIG[effectivePriority];
   const activeProjects = useMemo(
     () => projects.filter((p) => p.status !== 'completed'),
     [projects]
@@ -285,11 +377,38 @@ export function QuickCapture({
               setText(e.target.value);
               if (ignoreAutoTime) setIgnoreAutoTime(false);
             }}
-            placeholder="Yeni görev…"
+            placeholder={
+              isFocused
+                ? 'Yeni görev… (örn: Rapor 15:00 !acil #iş)'
+                : 'Yeni görev…'
+            }
             aria-label="Yeni görev başlığı"
             maxLength={120}
             className="select-text flex-1 bg-transparent text-app-primary text-sm placeholder-app-muted outline-none min-w-0 font-medium"
           />
+
+          {(parsedNatural.priority || parsedNatural.category) && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium flex-shrink-0"
+              style={{
+                background:
+                  effectivePriority === 'high'
+                    ? 'rgba(239, 68, 68, 0.14)'
+                    : 'var(--surface-2)',
+                color:
+                  effectivePriority === 'high'
+                    ? '#FCA5A5'
+                    : CATEGORY_CONFIG[effectiveCategory].dotColor,
+              }}
+            >
+              <Sparkles size={11} aria-hidden="true" />
+              <span>
+                {parsedNatural.priority
+                  ? PRIORITY_CONFIG[parsedNatural.priority].label
+                  : CATEGORY_CONFIG[effectiveCategory].shortLabel}
+              </span>
+            </span>
+          )}
 
           {activeTimeLabel && (
             <span
@@ -328,7 +447,7 @@ export function QuickCapture({
           >
             {CATEGORIES.map((cat) => {
               const cfg = CATEGORY_CONFIG[cat];
-              const isSelected = selectedCategory === cat;
+              const isSelected = effectiveCategory === cat;
               return (
                 <button
                   key={cat}

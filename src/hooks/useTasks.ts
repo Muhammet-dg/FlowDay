@@ -39,6 +39,7 @@ type UseTasksReturn = {
   toggleTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
   editTask: (id: string, title: string, note?: string) => Promise<void>;
+  reorderTasks: (orderedIds: string[]) => void;
   undoDeleteTask: () => void;
   dismissDeleteToast: () => void;
   updateSubtasks: (taskId: string, subtasks: Subtask[]) => Promise<void>;
@@ -58,6 +59,7 @@ type UseTasksOptions = {
 };
 
 const ARCHIVE_STORAGE_PREFIX = 'flowday_archived_tasks_';
+const ORDER_STORAGE_PREFIX = 'flowday_task_order_';
 
 function loadArchivedTasks(userId: string): Task[] {
   if (!userId) return [];
@@ -78,10 +80,30 @@ function saveArchivedTasks(userId: string, list: Task[]): void {
   }
 }
 
+function loadTaskOrder(userId: string): string[] {
+  if (!userId) return [];
+  try {
+    const raw = localStorage.getItem(`${ORDER_STORAGE_PREFIX}${userId}`);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveTaskOrder(userId: string, order: string[]): void {
+  if (!userId) return;
+  try {
+    localStorage.setItem(`${ORDER_STORAGE_PREFIX}${userId}`, JSON.stringify(order));
+  } catch {
+    // ignore storage errors
+  }
+}
+
 // ─── Hook ────────────────────────────────────────────────────
 export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [archivedTasks, setArchivedTasks] = useState<Task[]>(() => loadArchivedTasks(userId));
+  const [taskOrder, setTaskOrder] = useState<string[]>(() => loadTaskOrder(userId));
   const [loading, setLoading] = useState<LoadingState>('idle');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,9 +118,10 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     timerId: ReturnType<typeof setTimeout>;
   } | null>(null);
 
-  // Kullanıcı değiştiğinde arşivi yükle
+  // Kullanıcı değiştiğinde arşivi ve özel sıralamayı yükle
   useEffect(() => {
     setArchivedTasks(loadArchivedTasks(userId));
+    setTaskOrder(loadTaskOrder(userId));
   }, [userId]);
 
   // Bekleyen silme işlemini veritabanına uygula
@@ -245,8 +268,13 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
         subtasks: resolvedSubtasks,
       });
 
-      // Optimistic update — anında UI'ya yansıt
+      // Optimistic update — anında UI'ya yansıt ve özel sıralamanın en başına koy
       setTasks((prev) => [optimisticTask, ...prev]);
+      setTaskOrder((prev) => {
+        const next = [optimisticTask.id, ...prev.filter((id) => id !== optimisticTask.id)];
+        saveTaskOrder(userId, next);
+        return next;
+      });
 
       try {
         const encodedNote = encodeNoteWithCategory(cleanNote, resolvedCategory);
@@ -301,6 +329,11 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
           setTasks((prev) =>
             prev.map((t) => (t.id === optimisticTask.id ? savedTask : t))
           );
+          setTaskOrder((prev) => {
+            const next = prev.map((id) => (id === optimisticTask.id ? savedTask.id : id));
+            saveTaskOrder(userId, next);
+            return next;
+          });
 
           // ── QStash: Hatırlatıcı zamanlaması ────────────────────────────────
           if (savedTask.reminder_time) {
@@ -681,6 +714,20 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     saveArchivedTasks(userId, []);
   }, [userId]);
 
+  // ── Sürükle-Bırak Görev Sıralaması Güncelle ─────────────────
+  const reorderTasks = useCallback(
+    (orderedIds: string[]) => {
+      setTaskOrder((prev) => {
+        const orderedSet = new Set(orderedIds);
+        const remaining = prev.filter((id) => !orderedSet.has(id));
+        const next = [...orderedIds, ...remaining];
+        saveTaskOrder(userId, next);
+        return next;
+      });
+    },
+    [userId]
+  );
+
   // ── JSON İçe Aktarma (Import) ───────────────────────────────
   const importTasks = useCallback(
     async (incoming: Task[]) => {
@@ -724,7 +771,20 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
   );
 
   // ── Derived state ──────────────────────────────────────────
-  const activeTasks = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
+  const activeTasks = useMemo(() => {
+    const active = tasks.filter((t) => !t.completed);
+    if (taskOrder.length === 0) return active;
+    const indexMap = new Map<string, number>();
+    taskOrder.forEach((id, idx) => indexMap.set(id, idx));
+    return [...active].sort((a, b) => {
+      const idxA = indexMap.get(a.id);
+      const idxB = indexMap.get(b.id);
+      if (idxA !== undefined && idxB !== undefined) return idxA - idxB;
+      if (idxA !== undefined) return 1;
+      if (idxB !== undefined) return -1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+  }, [tasks, taskOrder]);
   const completedTasks = useMemo(() => tasks.filter((t) => t.completed), [tasks]);
 
   const stats = useMemo(() => {
@@ -760,6 +820,7 @@ export function useTasks({ userId }: UseTasksOptions): UseTasksReturn {
     toggleTask,
     deleteTask,
     editTask,
+    reorderTasks,
     undoDeleteTask,
     dismissDeleteToast,
     updateSubtasks,

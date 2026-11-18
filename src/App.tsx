@@ -86,6 +86,7 @@ function App() {
     toggleTask,
     deleteTask,
     editTask,
+    reorderTasks,
     undoDeleteTask,
     dismissDeleteToast,
     updateSubtasks,
@@ -346,6 +347,7 @@ function App() {
                   onToggle={toggleTask}
                   onDelete={deleteTask}
                   onEdit={editTask}
+                  onReorder={reorderTasks}
                   onSnooze={snoozeTask}
                   onFocus={setFocusedTask}
                   onUpdateSubtasks={updateSubtasks}
