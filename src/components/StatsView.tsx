@@ -77,8 +77,6 @@ export function StatsView({
   onImportData,
 }: StatsViewProps) {
   const [period, setPeriod] = useState<StatsPeriod>('week');
-  const [editingGoal, setEditingGoal] = useState(false);
-  const [goalInput, setGoalInput] = useState('');
   const [importStatus, setImportStatus] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,8 +88,6 @@ export function StatsView({
     selectedDayStr,
     setSelectedDayStr,
     selectedDayBucket,
-    weeklyGoal,
-    setWeeklyGoal,
     weeklyData,
     monthlyData,
     yearlyAndTableData,
@@ -127,7 +123,6 @@ export function StatsView({
       learnings,
       routines,
       routineLogs,
-      weeklyGoal,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
@@ -149,9 +144,6 @@ export function StatsView({
     try {
       const text = await file.text();
       const parsed = JSON.parse(text) as BackupPayload;
-      if (parsed.weeklyGoal && typeof parsed.weeklyGoal === 'number') {
-        setWeeklyGoal(parsed.weeklyGoal);
-      }
       if (onImportData) {
         await onImportData(parsed);
       }
@@ -164,11 +156,6 @@ export function StatsView({
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
-
-  const weeklyGoalPct = Math.min(
-    100,
-    Math.round((weeklyData.totalCompleted / Math.max(1, weeklyGoal)) * 100)
-  );
 
   // Trend çizgisi SVG noktaları (Ay görünümü için)
   const trendSvg = (() => {
@@ -599,84 +586,6 @@ export function StatsView({
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Haftalık Hedef Çubuğu ("Bu hafta X görev") */}
-          <div
-            className="rounded-3xl p-4 border"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <Target size={15} className="text-indigo-400" />
-                <span className="text-app-primary text-xs font-bold">
-                  Haftalık Hedef: Bu hafta {weeklyGoal} görev
-                </span>
-              </div>
-
-              {!editingGoal ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setGoalInput(String(weeklyGoal));
-                    setEditingGoal(true);
-                  }}
-                  className="text-[11px] font-semibold text-indigo-400 hover:underline"
-                >
-                  Hedefi Düzenle
-                </button>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const num = parseInt(goalInput, 10);
-                    if (Number.isFinite(num) && num > 0) setWeeklyGoal(num);
-                    setEditingGoal(false);
-                  }}
-                  className="flex items-center gap-1"
-                >
-                  <input
-                    type="number"
-                    min={1}
-                    max={200}
-                    value={goalInput}
-                    onChange={(e) => setGoalInput(e.target.value)}
-                    className="w-14 px-2 py-0.5 rounded-lg text-xs text-app-primary border outline-none"
-                    style={{ background: 'var(--bg-2)', borderColor: 'var(--border-focus)' }}
-                  />
-                  <button
-                    type="submit"
-                    className="px-2 py-0.5 rounded-lg text-[11px] font-bold text-white"
-                    style={{ background: 'var(--primary)' }}
-                  >
-                    Kaydet
-                  </button>
-                </form>
-              )}
-            </div>
-
-            <div
-              className="w-full h-2.5 rounded-full overflow-hidden my-2"
-              style={{ background: 'var(--surface-2)' }}
-            >
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${weeklyGoalPct}%`,
-                  background:
-                    weeklyGoalPct >= 100
-                      ? 'linear-gradient(90deg, #10B981, #34D399)'
-                      : 'linear-gradient(90deg, #6366F1, #818CF8)',
-                }}
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-app-secondary font-medium">
-              <span>
-                {weeklyData.totalCompleted} / {weeklyGoal} tamamlandı
-              </span>
-              <span className="font-bold text-app-primary">%{weeklyGoalPct}</span>
-            </div>
           </div>
 
           {/* Haftalık Özet Kartları (2x2 Grid) */}
