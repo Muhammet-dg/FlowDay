@@ -203,11 +203,9 @@ function App() {
   // ── Auth durumu henüz bilinmiyor → Splash ──────────────────────────────────
   if (authLoading) {
     return (
-      <div
-        className="min-h-dvh h-dvh w-full flex items-center justify-center select-none"
-        style={{ background: 'var(--bg)' }}
-      >
-        <div className="relative flex flex-col items-center gap-4 animate-fade-in">
+      <div className="relative min-h-dvh h-dvh w-full flex items-center justify-center select-none overflow-hidden bg-transparent">
+        <BackgroundAnimation />
+        <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl"
             style={{
@@ -218,7 +216,7 @@ function App() {
             <Loader2 size={26} className="text-white animate-spin" />
           </div>
           <div className="text-center">
-            <p className="text-app-primary font-bold text-base tracking-tight">FlowDay</p>
+            <p className="text-app-primary font-display font-bold text-base tracking-tight">FlowDay</p>
             <p className="text-app-muted text-xs mt-0.5">Hazırlanıyor...</p>
           </div>
         </div>
@@ -242,7 +240,7 @@ function App() {
   // ── Oturum açık → Ana Uygulama ────────────────────────────────────────────
   return (
     <div className="relative min-h-dvh h-dvh w-full bg-transparent flex items-center justify-center overflow-hidden">
-      {/* Sitenin tam ekran animasyonlu arka planı (animasyon.css) */}
+      {/* FlowDay Horizon Flow arka planı (Gece / Gündüz uyumlu) */}
       <BackgroundAnimation />
 
       {/* Gün Tamamlandı Kutlama & Confetti */}
@@ -252,10 +250,10 @@ function App() {
 
       {/* Mobil / PWA Çerçevesi */}
       <div
-        className="relative w-full h-full sm:max-w-md sm:h-[93vh] sm:max-h-[900px] sm:rounded-[32px] sm:border bg-transparent overflow-hidden flex flex-col select-none z-10"
+        className="relative w-full h-full sm:max-w-md sm:h-[93vh] sm:max-h-[900px] sm:rounded-[32px] sm:border bg-transparent overflow-hidden flex flex-col select-none z-10 transition-shadow duration-300"
         style={{
           borderColor: 'var(--border-strong)',
-          boxShadow: '0 24px 80px rgba(0, 0, 0, 0.65)',
+          boxShadow: 'var(--frame-shadow)',
         }}
       >
         {/* ─── İlk Yükleme Katmanı ─── */}

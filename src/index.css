@@ -71,16 +71,24 @@
      --font-display: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   */
 
-  --bg:            #000000;   /* Saf derin zemin — animasyon için */
-  --bg-2:          #080a10;   /* İkincil derin yüzey */
-  --surface:       rgba(22, 25, 34, 0.88);   /* Cam dokulu füme kart yüzeyi */
-  --surface-2:     rgba(31, 36, 48, 0.90);   /* İkincil kart / buton yüzeyi */
-  --surface-hover: rgba(37, 43, 57, 0.94);
-  --surface-alt:   rgba(22, 25, 34, 0.88);
+  --bg:            #0A0D14;   /* Obsidian Twilight temel zemin */
+  --bg-2:          #101420;   /* İkincil derin yüzey */
+  --bg-gradient:   linear-gradient(160deg, #0D111C 0%, #0A0D14 52%, #080B12 100%);
+  --bg-orb-1:      radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.16) 0%, rgba(79, 70, 229, 0.06) 44%, transparent 72%);
+  --bg-orb-2:      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.11) 0%, rgba(14, 165, 233, 0.04) 46%, transparent 72%);
+  --bg-pattern-dot: rgba(148, 163, 184, 0.14);
+  --bg-contour-stroke:   rgba(129, 140, 248, 0.085);
+  --bg-contour-stroke-2: rgba(52, 211, 153, 0.055);
+  --frame-shadow:  0 24px 80px rgba(0, 0, 0, 0.62);
 
-  /* %8 - %12 opaklıkta ince sınır çizgileri */
-  --border:        rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.15);
+  --surface:       rgba(19, 23, 34, 0.84);   /* Sakin füme cam kart yüzeyi */
+  --surface-2:     rgba(28, 34, 48, 0.88);   /* İkincil kart / buton yüzeyi */
+  --surface-hover: rgba(35, 42, 58, 0.92);
+  --surface-alt:   rgba(19, 23, 34, 0.86);
+
+  /* %9 - %14 opaklıkta rafine sınır çizgileri */
+  --border:        rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.14);
   --border-focus:  rgba(99, 102, 241, 0.55);
 
   /* WCAG AA/AAA uyumlu tipografi kontrastları */
@@ -90,16 +98,16 @@
   --text-faint:     #64748B;   /* İnce detaylar */
 
   /* Yüzen bar & modallar */
-  --nav-bg:    rgba(22, 25, 34, 0.82);
-  --input-bg:  rgba(22, 25, 34, 0.92);
-  --sheet-bg:  #12151E;
-  --overlay:   rgba(5, 6, 10, 0.75);
+  --nav-bg:    rgba(18, 22, 32, 0.84);
+  --input-bg:  rgba(18, 22, 32, 0.90);
+  --sheet-bg:  #121621;
+  --overlay:   rgba(6, 8, 14, 0.72);
 
   /* Vurgu (Accent) Renkleri — Rafine Tonlar */
   --primary:       #6366F1;   /* Sıcak İndigo */
   --primary-hover: #4F46E5;
   --primary-light: #818CF8;
-  --primary-dim:   rgba(99, 102, 241, 0.12);
+  --primary-dim:   rgba(99, 102, 241, 0.14);
   --primary-glow:  rgba(99, 102, 241, 0.28);
 
   --success:       #10B981;   /* Adaçayı yeşili / zümrüt */
@@ -114,18 +122,26 @@
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Aydınlık Tema (Editorial Sıcak Kağıt / Taş Tonları) ────── */
+/* ── Aydınlık Tema (Warm Daylight Paper — Sabah Işığı Defter Atmosferi) ── */
 [data-theme="light"] {
-  --bg:            #F7F6F2;   /* Sıcak editorial kağıt rengi */
-  --bg-2:          #EFECE6;   /* Taş / kum tonu */
-  --surface:       #FFFFFF;   /* Saf kart yüzeyi */
-  --surface-2:     #F2EFE9;   /* İkincil yüzey */
-  --surface-hover: #E8E4DC;
+  --bg:            #F7F5F0;   /* Sıcak editorial kağıt temel zemin */
+  --bg-2:          #EFECE4;   /* Yumuşak kum / taş ikincil yüzey */
+  --bg-gradient:   linear-gradient(160deg, #FAF8F4 0%, #F5F2EB 54%, #F2EEE5 100%);
+  --bg-orb-1:      radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.11) 0%, rgba(129, 140, 248, 0.04) 48%, transparent 74%);
+  --bg-orb-2:      radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.10) 0%, rgba(16, 185, 129, 0.04) 48%, transparent 74%);
+  --bg-pattern-dot: rgba(71, 85, 105, 0.15);
+  --bg-contour-stroke:   rgba(79, 70, 229, 0.08);
+  --bg-contour-stroke-2: rgba(217, 119, 6, 0.065);
+  --frame-shadow:  0 20px 60px rgba(15, 23, 42, 0.10);
+
+  --surface:       rgba(255, 255, 255, 0.88);   /* Yarı şeffaf saf kağıt kart */
+  --surface-2:     rgba(241, 237, 229, 0.90);   /* İkincil yüzey */
+  --surface-hover: rgba(235, 230, 220, 0.94);
   --surface-alt:   rgba(255, 255, 255, 0.92);
 
   --border:        rgba(17, 24, 39, 0.08);
-  --border-strong: rgba(17, 24, 39, 0.12);
-  --border-focus:  rgba(79, 70, 229, 0.45);
+  --border-strong: rgba(17, 24, 39, 0.13);
+  --border-focus:  rgba(79, 70, 229, 0.48);
 
   --text-primary:   #111318;   /* Derin mürekkep siyahı (WCAG AAA) */
   --text-secondary: #374151;   /* Koyu arduvaz (WCAG AA+) */
@@ -133,9 +149,9 @@
   --text-faint:     #6B7280;   /* Yardımcı gri */
 
   --nav-bg:    rgba(255, 255, 255, 0.88);
-  --input-bg:  #FFFFFF;
-  --sheet-bg:  #FAF9F6;
-  --overlay:   rgba(15, 18, 25, 0.45);
+  --input-bg:  rgba(255, 255, 255, 0.95);
+  --sheet-bg:  #FAF8F4;
+  --overlay:   rgba(15, 18, 25, 0.42);
 
   --primary:       #4F46E5;   /* Sıcak İndigo (Light kontrast) */
   --primary-hover: #4338CA;
@@ -170,8 +186,9 @@ body {
   margin: 0;
   padding: 0;
   overscroll-behavior: none;
-  background-color: #000;
+  background-color: var(--bg);
   font-family: var(--font-sans);
+  transition: background-color 260ms ease, color 220ms ease;
 }
 
 button,
@@ -377,126 +394,92 @@ input:-webkit-autofill:active {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   ARKA PLAN DİJİTAL YAĞMUR / NEON ANİMASYONU (animasyon.css)
+   FLOWDAY "HORIZON FLOW" ARKA PLAN SİSTEMİ
+   Gece (Obsidian Twilight) & Gündüz (Warm Daylight Paper)
+   Saf CSS + Satır İçi SVG · 60fps · Pil Dostu · Sıfır Harici Varlık
    ══════════════════════════════════════════════════════════════ */
 
-.rain-bg-container {
+.flowday-bg-root {
+  background-color: var(--bg);
+  transition: background-color 260ms ease;
+}
+
+.flowday-bg-canvas {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-gradient);
+  transition: background 280ms ease;
+}
+
+.flowday-bg-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  will-change: transform;
+  transition: background 280ms ease, opacity 280ms ease;
+}
+
+.flowday-bg-orb-primary {
+  top: -18%;
+  left: -14%;
+  width: min(76vw, 560px);
+  height: min(76vw, 560px);
+  background: var(--bg-orb-1);
+  animation: horizonDriftPrimary 26s ease-in-out infinite alternate;
+}
+
+.flowday-bg-orb-secondary {
+  bottom: -20%;
+  right: -14%;
+  width: min(72vw, 520px);
+  height: min(72vw, 520px);
+  background: var(--bg-orb-2);
+  animation: horizonDriftSecondary 32s ease-in-out infinite alternate;
+}
+
+/* Planlayıcı defteri nokta ızgarası (kenarlara doğru yumuşak vinyet maskeli) */
+.flowday-bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--bg-pattern-dot) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 85% 78% at 50% 42%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 78% at 50% 42%, #000 35%, transparent 100%);
+  opacity: 0.9;
+  transition: opacity 260ms ease;
+}
+
+/* FlowDay akış konturu (hafif mimari ufuk çizgisi) */
+.flowday-bg-contour {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  --c: #09f;
-  background-color: #000;
-  background-image:
-    radial-gradient(4px 100px at 0px 235px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 235px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 117.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 252px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 252px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 126px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 150px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 150px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 75px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 253px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 253px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 126.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 204px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 204px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 102px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 134px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 134px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 67px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 179px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 179px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 89.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 299px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 299px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 149.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 215px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 215px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 107.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 281px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 281px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 140.5px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 158px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 158px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 79px, var(--c) 100%, #0000 150%),
-    radial-gradient(4px 100px at 0px 210px, var(--c), #0000),
-    radial-gradient(4px 100px at 300px 210px, var(--c), #0000),
-    radial-gradient(1.5px 1.5px at 150px 105px, var(--c) 100%, #0000 150%);
-  background-size:
-    300px 235px, 300px 235px, 300px 235px,
-    300px 252px, 300px 252px, 300px 252px,
-    300px 150px, 300px 150px, 300px 150px,
-    300px 253px, 300px 253px, 300px 253px,
-    300px 204px, 300px 204px, 300px 204px,
-    300px 134px, 300px 134px, 300px 134px,
-    300px 179px, 300px 179px, 300px 179px,
-    300px 299px, 300px 299px, 300px 299px,
-    300px 215px, 300px 215px, 300px 215px,
-    300px 281px, 300px 281px, 300px 281px,
-    300px 158px, 300px 158px, 300px 158px,
-    300px 210px, 300px 210px, 300px 210px;
-  animation: rainFlow 95s linear infinite;
-  opacity: 0.45;
-  will-change: background-position;
+  pointer-events: none;
+  transition: opacity 280ms ease;
 }
 
-.rain-bg-container::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background-image: radial-gradient(
-    circle at 50% 50%,
-    transparent 0,
-    transparent 2px,
-    hsl(0 0 4%) 2px
-  );
-  background-size: 8px 8px;
-  --f: blur(1em) brightness(4.5);
-  animation: rainHue 28s linear infinite;
+/* Sekme arka plandayken veya düşük güçlü cihazlarda hareketi tamamen durdur */
+.flowday-bg-static .flowday-bg-orb {
+  animation: none !important;
+  will-change: auto;
 }
 
-@keyframes rainHue {
+@keyframes horizonDriftPrimary {
   0% {
-    backdrop-filter: var(--f) hue-rotate(0deg);
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  to {
-    backdrop-filter: var(--f) hue-rotate(360deg);
+  100% {
+    transform: translate3d(28px, 22px, 0) scale(1.06);
   }
 }
 
-@keyframes rainFlow {
+@keyframes horizonDriftSecondary {
   0% {
-    background-position:
-      0px 220px, 3px 220px, 151.5px 337.5px,
-      25px 24px, 28px 24px, 176.5px 150px,
-      50px 16px, 53px 16px, 201.5px 91px,
-      75px 224px, 78px 224px, 226.5px 350.5px,
-      100px 19px, 103px 19px, 251.5px 121px,
-      125px 120px, 128px 120px, 276.5px 187px,
-      150px 31px, 153px 31px, 301.5px 120.5px,
-      175px 235px, 178px 235px, 326.5px 384.5px,
-      200px 121px, 203px 121px, 351.5px 228.5px,
-      225px 224px, 228px 224px, 376.5px 364.5px,
-      250px 26px, 253px 26px, 401.5px 105px,
-      275px 75px, 278px 75px, 426.5px 180px;
+    transform: translate3d(0, 0, 0) scale(1);
   }
-  to {
-    background-position:
-      0px 6800px, 3px 6800px, 151.5px 6917.5px,
-      25px 13632px, 28px 13632px, 176.5px 13758px,
-      50px 5416px, 53px 5416px, 201.5px 5491px,
-      75px 17175px, 78px 17175px, 226.5px 17301.5px,
-      100px 5119px, 103px 5119px, 251.5px 5221px,
-      125px 8428px, 128px 8428px, 276.5px 8495px,
-      150px 9876px, 153px 9876px, 301.5px 9965.5px,
-      175px 13391px, 178px 13391px, 326.5px 13540.5px,
-      200px 14741px, 203px 14741px, 351.5px 14848.5px,
-      225px 18770px, 228px 18770px, 376.5px 18910.5px,
-      250px 5082px, 253px 5082px, 401.5px 5161px,
-      275px 6375px, 278px 6375px, 426.5px 6480px;
+  100% {
+    transform: translate3d(-24px, -18px, 0) scale(1.05);
   }
 }
 
@@ -735,9 +718,9 @@ input:-webkit-autofill:active {
     scroll-behavior: auto !important;
   }
 
-  .rain-bg-container,
-  .rain-bg-container::after {
+  .flowday-bg-orb {
     animation: none !important;
+    will-change: auto;
   }
 }
 
@@ -757,30 +740,14 @@ input:-webkit-autofill:active {
     font-size: 16px !important;
   }
 
-  /* Mobilde 60fps akıcılık için tam ekran backdrop-filter ve ağır katmanlı gradient yükünü azalt */
-  .rain-bg-container {
-    background-image:
-      radial-gradient(3px 80px at 0px 180px, rgba(99, 102, 241, 0.35), #0000),
-      radial-gradient(3px 80px at 150px 90px, rgba(16, 185, 129, 0.28), #0000),
-      radial-gradient(1.5px 1.5px at 75px 120px, rgba(56, 189, 248, 0.38) 100%, #0000 150%),
-      radial-gradient(3px 80px at 220px 210px, rgba(99, 102, 241, 0.30), #0000),
-      radial-gradient(1.5px 1.5px at 180px 45px, rgba(99, 102, 241, 0.32) 100%, #0000 150%),
-      radial-gradient(3px 80px at 280px 140px, rgba(56, 189, 248, 0.26), #0000);
-    background-size:
-      300px 220px,
-      300px 200px,
-      300px 220px,
-      300px 260px,
-      300px 180px,
-      300px 240px;
-    animation: none;
-    will-change: auto;
+  /* Mobilde 60fps ve pil verimliliği için ortam ışıklarını hafifçe sadeleştir */
+  .flowday-bg-orb-primary {
+    width: 88vw;
+    height: 88vw;
   }
 
-  .rain-bg-container::after {
-    animation: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    opacity: 0.55;
+  .flowday-bg-orb-secondary {
+    width: 82vw;
+    height: 82vw;
   }
 }

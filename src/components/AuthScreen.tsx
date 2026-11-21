@@ -66,26 +66,15 @@ export function AuthScreen({
 
   return (
     <div
-      className="relative min-h-dvh h-dvh w-full flex flex-col items-center justify-center px-5 select-none transition-colors duration-300 overflow-hidden"
+      className="relative min-h-dvh h-dvh w-full flex flex-col items-center justify-center px-5 select-none transition-colors duration-300 overflow-hidden bg-transparent"
       style={{
-        background: 'var(--bg)',
         paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
         paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
       }}
     >
       <BackgroundAnimation />
-      {/* Arka Plan Editorial Işık Efekti */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-32 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full opacity-25"
-          style={{
-            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.45) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-          }}
-        />
-      </div>
 
-      <div className="relative w-full max-w-sm animate-fade-in">
+      <div className="relative z-10 w-full max-w-sm animate-fade-in">
         {/* Logo / Başlık */}
         <div className="text-center mb-8">
           <div
