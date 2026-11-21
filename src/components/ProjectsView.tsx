@@ -156,6 +156,7 @@ export function ProjectsView({
   const [projectTaskTitle, setProjectTaskTitle] = useState('');
   const [milestoneTitle, setMilestoneTitle] = useState('');
   const [milestoneDate, setMilestoneDate] = useState('');
+  const [showMilestoneDate, setShowMilestoneDate] = useState(false);
 
   // Öğrendiklerim Formu & Arama
   const [learningContent, setLearningContent] = useState('');
@@ -220,6 +221,7 @@ export function ProjectsView({
     );
     setMilestoneTitle('');
     setMilestoneDate('');
+    setShowMilestoneDate(false);
   };
 
   const handleAddLearningSubmit = async (e: React.FormEvent) => {
@@ -253,10 +255,9 @@ export function ProjectsView({
   }, [learnings, learningFilterProject, learningSearch]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 1. PROJE DETAY EKRANI
+  // 1. PROJE DETAY EKRANI (Sadeleştirilmiş & Taşmasız)
   // ═══════════════════════════════════════════════════════════════════════════
   if (selectedProject) {
-    const statusCfg = PROJECT_STATUS_CONFIG[selectedProject.status];
     const projectTasks = tasks.filter((t) => t.project_id === selectedProject.id);
     const activeProjectTasks = projectTasks.filter((t) => !t.completed);
     const completedProjectTasks = projectTasks.filter((t) => t.completed);
@@ -291,12 +292,12 @@ export function ProjectsView({
     const projectLearnings = learnings.filter((l) => l.project_id === selectedProject.id);
 
     return (
-      <div className="px-5 pb-8 select-none animate-fade-in">
-        {/* Üst Bar: Geri Dön & Durum Seçici */}
+      <div className="px-4 pb-8 select-none animate-fade-in">
+        {/* Üst Bar: Geri Dön & Sade Durum Seçici */}
         <div
           className="flex items-center justify-between gap-2 pb-4"
           style={{
-            paddingTop: 'calc(3rem + env(safe-area-inset-top, 0px))',
+            paddingTop: 'calc(1.25rem + env(safe-area-inset-top, 0px))',
           }}
         >
           <button
@@ -305,34 +306,35 @@ export function ProjectsView({
               setSelectedProjectId(null);
               if (onClearInitialProject) onClearInitialProject();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-app-secondary hover:text-app-primary transition-all active:scale-95"
-            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+            className="inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-xl text-xs font-medium text-app-secondary hover:text-app-primary transition-colors active:scale-95 cursor-pointer"
+            style={{ background: 'var(--surface)' }}
           >
-            <ArrowLeft size={14} />
-            <span>Projelere Dön</span>
+            <ArrowLeft size={15} />
+            <span>Projeler</span>
           </button>
 
           <div className="flex items-center gap-1.5">
-            {(['active', 'on_hold', 'completed'] as const).map((st) => {
-              const cfg = PROJECT_STATUS_CONFIG[st];
-              const isCur = selectedProject.status === st;
-              return (
-                <button
-                  key={st}
-                  type="button"
-                  onClick={() => void onUpdateProject(selectedProject.id, { status: st })}
-                  className={`px-2.5 py-1.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 ${
-                    isCur ? `${cfg.badgeBg} ${cfg.badgeText}` : 'text-app-muted'
-                  }`}
-                  style={{
-                    background: isCur ? undefined : 'var(--surface)',
-                    border: '1px solid var(--border)',
-                  }}
-                >
-                  {cfg.label}
-                </button>
-              );
-            })}
+            <div
+              className="inline-flex items-center p-0.5 rounded-xl"
+              style={{ background: 'var(--surface)' }}
+            >
+              {(['active', 'on_hold', 'completed'] as const).map((st) => {
+                const cfg = PROJECT_STATUS_CONFIG[st];
+                const isCur = selectedProject.status === st;
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => void onUpdateProject(selectedProject.id, { status: st })}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                      isCur ? `${cfg.badgeBg} ${cfg.badgeText} font-semibold` : 'text-app-muted hover:text-app-secondary'
+                    }`}
+                  >
+                    {cfg.label}
+                  </button>
+                );
+              })}
+            </div>
 
             <button
               type="button"
@@ -342,74 +344,57 @@ export function ProjectsView({
                 if (onClearInitialProject) onClearInitialProject();
               }}
               aria-label="Projeyi sil"
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-app-muted hover:text-red-400 transition-colors active:scale-90"
-              style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-app-muted hover:text-red-400 transition-colors active:scale-90 cursor-pointer"
+              style={{ background: 'var(--surface)' }}
             >
-              <Trash2 size={14} />
+              <Trash2 size={15} />
             </button>
           </div>
         </div>
 
-        {/* Proje Başlık & Genel İlerleme Kartı */}
+        {/* Proje Başlık & Özet Kartı */}
         <div
-          className="rounded-3xl p-5 border mb-4 relative overflow-hidden"
+          className="rounded-2xl p-4 mb-4 relative overflow-hidden"
           style={{
             background: 'var(--surface)',
-            borderColor: `${selectedProject.color}45`,
           }}
         >
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={{
-                  background: `${selectedProject.color}22`,
+                  background: `${selectedProject.color}1E`,
                   color: selectedProject.color,
-                  border: `1px solid ${selectedProject.color}40`,
                 }}
               >
-                <ProjectIcon icon={selectedProject.icon} size={22} />
+                <ProjectIcon icon={selectedProject.icon} size={20} />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${statusCfg.badgeBg} ${statusCfg.badgeText}`}
-                  >
-                    {statusCfg.label}
-                  </span>
-                  {projectStreak > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300">
-                      <Flame size={10} className="fill-amber-400 text-amber-400" />
-                      <span>{projectStreak} gün seri</span>
-                    </span>
-                  )}
-                </div>
-                <h1 className="text-app-primary text-xl font-bold tracking-tight mt-1 truncate">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-app-primary text-lg font-bold leading-snug line-clamp-2">
                   {selectedProject.name}
                 </h1>
+                {selectedProject.description && (
+                  <p className="text-app-secondary text-xs mt-1 leading-relaxed">
+                    {selectedProject.description}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="text-right flex-shrink-0">
               <span
-                className="text-2xl font-extrabold tabular-nums"
+                className="text-xl font-bold tabular-nums"
                 style={{ color: selectedProject.color }}
               >
                 %{progressPct}
               </span>
-              <p className="text-app-muted text-[10px] font-semibold uppercase">İlerleme</p>
             </div>
           </div>
 
-          {selectedProject.description && (
-            <p className="text-app-secondary text-xs mt-3 leading-relaxed">
-              {selectedProject.description}
-            </p>
-          )}
-
-          {/* İlerleme Çubuğu */}
+          {/* İnce İlerleme Çubuğu */}
           <div
-            className="w-full h-2 rounded-full overflow-hidden mt-3.5"
+            className="w-full h-1.5 rounded-full overflow-hidden mt-3.5"
             style={{ background: 'var(--surface-2)' }}
           >
             <div
@@ -421,20 +406,33 @@ export function ProjectsView({
             />
           </div>
 
-          {/* Bugünün Özeti + Tarihler */}
-          <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-app flex-wrap text-xs">
-            <div className="inline-flex items-center gap-1.5 font-semibold text-app-primary">
-              <CheckCircle2 size={13} className="text-emerald-400" />
-              <span>
-                {todayTotalCount > 0
-                  ? `Bugün ${todayTotalCount}'ün ${completedTodayCount}'si yapıldı`
-                  : 'Bugün için aktif proje görevi yok'}
-              </span>
+          {/* Alt Meta Satırı: Bugün Özeti + Seri + Tarihler */}
+          <div className="flex items-center justify-between gap-2 mt-3 flex-wrap text-xs text-app-secondary">
+            <div className="inline-flex items-center gap-2">
+              {todayTotalCount > 0 ? (
+                <span className="inline-flex items-center gap-1.5 text-app-primary font-medium">
+                  <CheckCircle2 size={13} className="text-emerald-400" />
+                  <span>
+                    Bugün {completedTodayCount}/{todayTotalCount} tamamlandı
+                  </span>
+                </span>
+              ) : (
+                <span className="text-app-muted">
+                  {completedItems}/{totalItems} adım tamamlandı
+                </span>
+              )}
+
+              {projectStreak > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-amber-400 font-medium tabular-nums">
+                  <Flame size={12} className="fill-amber-400" />
+                  <span>{projectStreak}</span>
+                </span>
+              )}
             </div>
 
             {(selectedProject.start_date || selectedProject.target_date) && (
-              <div className="inline-flex items-center gap-1 text-[11px] text-app-muted">
-                <Calendar size={11} />
+              <div className="inline-flex items-center gap-1 text-xs text-app-muted tabular-nums">
+                <Calendar size={12} />
                 <span>
                   {selectedProject.start_date
                     ? new Date(selectedProject.start_date).toLocaleDateString('tr-TR', {
@@ -454,94 +452,94 @@ export function ProjectsView({
           </div>
         </div>
 
-        {/* Proje Son 7 Günlük Mini Aktivite Grafiği */}
-        <div
-          className="rounded-2xl p-4 border mb-4"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-app-muted text-[10px] font-bold uppercase tracking-wider">
-              Son 7 Günlük Proje Ritmi
-            </p>
-            <span className="text-app-secondary text-[11px] font-semibold">
-              Toplam {completedProjectTasks.length} tamamlanan
-            </span>
+        {/* Son 7 Günlük Proje Ritmi (Yalnızca tamamlanan görev varsa gösterilir) */}
+        {completedProjectTasks.length > 0 && (
+          <div
+            className="rounded-2xl p-4 mb-4"
+            style={{ background: 'var(--surface)' }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-app-muted text-xs font-medium uppercase">
+                Son 7 Gün
+              </p>
+              <span className="text-app-secondary text-xs font-medium tabular-nums">
+                {completedProjectTasks.length} tamamlanan
+              </span>
+            </div>
+            <div className="grid grid-cols-7 gap-2 items-end h-16">
+              {last7Days.map((d) => {
+                const barH = d.doneCount > 0 ? Math.max(14, Math.round((d.doneCount / maxDayDone) * 40)) : 4;
+                const isToday = d.dStr === todayPrefix;
+                return (
+                  <div key={d.dStr} className="flex flex-col items-center gap-1">
+                    <div
+                      className="w-full max-w-[20px] rounded-md transition-all duration-300"
+                      style={{
+                        height: `${barH}px`,
+                        background:
+                          d.doneCount > 0 ? selectedProject.color : 'var(--surface-2)',
+                        opacity: isToday ? 1 : 0.75,
+                      }}
+                    />
+                    <span
+                      className={`text-xs ${
+                        isToday ? 'text-app-primary font-semibold' : 'text-app-muted'
+                      }`}
+                    >
+                      {d.dayLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-7 gap-2 items-end h-20 pt-2">
-            {last7Days.map((d) => {
-              const barH = d.doneCount > 0 ? Math.max(18, Math.round((d.doneCount / maxDayDone) * 48)) : 6;
-              const isToday = d.dStr === todayPrefix;
-              return (
-                <div key={d.dStr} className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] font-bold text-app-secondary tabular-nums">
-                    {d.doneCount > 0 ? d.doneCount : ''}
-                  </span>
-                  <div
-                    className="w-full max-w-[24px] rounded-lg transition-all duration-300"
-                    style={{
-                      height: `${barH}px`,
-                      background:
-                        d.doneCount > 0 ? selectedProject.color : 'var(--surface-2)',
-                      opacity: isToday ? 1 : 0.78,
-                    }}
-                  />
-                  <span
-                    className={`text-[10px] font-semibold ${
-                      isToday ? 'text-app-primary font-bold' : 'text-app-muted'
-                    }`}
-                  >
-                    {d.dayLabel}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        )}
 
-        {/* Kilometre Taşları (Milestones) */}
-        <div
-          className="rounded-2xl p-4 border mb-4"
-          style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+        {/* Kilometre Taşları (Sade Satırlar + Taşmayan Form) */}
+        <section
+          className="rounded-2xl p-4 mb-4"
+          style={{ background: 'var(--surface)' }}
+          aria-label="Kilometre taşları"
         >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-app-primary text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-app-muted text-xs font-medium uppercase flex items-center gap-1.5">
               <Flag size={13} style={{ color: selectedProject.color }} />
               <span>Kilometre Taşları</span>
             </h3>
-            <span className="text-app-muted text-[11px] font-semibold">
+            <span className="text-app-secondary text-xs font-semibold tabular-nums">
               {selectedProject.milestones.filter((m) => m.completed).length}/
               {selectedProject.milestones.length}
             </span>
           </div>
 
           {selectedProject.milestones.length > 0 && (
-            <div className="space-y-2 mb-3">
+            <div
+              className="divide-y mb-3"
+              style={{ borderColor: 'var(--border)' }}
+            >
               {selectedProject.milestones.map((ms) => (
                 <div
                   key={ms.id}
-                  className="flex items-center justify-between gap-2 p-2.5 rounded-xl border"
-                  style={{
-                    background: 'var(--surface-2)',
-                    borderColor: 'var(--border)',
-                  }}
+                  className="flex items-center justify-between gap-2 py-2.5"
+                  style={{ borderColor: 'var(--border)' }}
                 >
                   <button
                     type="button"
                     onClick={() => void onToggleMilestone(selectedProject.id, ms.id)}
-                    className="flex items-center gap-2.5 flex-1 min-w-0 text-left"
+                    className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer"
                   >
                     <span
                       className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-colors"
                       style={
                         ms.completed
-                          ? { background: '#10B981', color: '#ffffff' }
+                          ? { background: 'var(--success)', color: '#ffffff' }
                           : { border: `1.5px solid ${selectedProject.color}` }
                       }
                     >
                       {ms.completed && <Check size={11} strokeWidth={3} />}
                     </span>
                     <span
-                      className={`text-xs font-semibold truncate ${
+                      className={`text-sm font-medium truncate ${
                         ms.completed ? 'line-through text-app-muted' : 'text-app-primary'
                       }`}
                     >
@@ -549,91 +547,140 @@ export function ProjectsView({
                     </span>
                   </button>
 
-                  {ms.target_date && (
-                    <span className="text-[10px] text-app-muted font-medium flex-shrink-0">
-                      {new Date(ms.target_date).toLocaleDateString('tr-TR', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {ms.target_date && (
+                      <span className="text-xs text-app-muted tabular-nums">
+                        {new Date(ms.target_date).toLocaleDateString('tr-TR', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                    )}
 
-                  <button
-                    type="button"
-                    onClick={() => void onDeleteMilestone(selectedProject.id, ms.id)}
-                    className="text-app-muted hover:text-red-400 p-1"
-                    aria-label="Kilometre taşını sil"
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => void onDeleteMilestone(selectedProject.id, ms.id)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-app-muted hover:text-red-400 transition-colors cursor-pointer"
+                      aria-label="Kilometre taşını sil"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
 
-          <form onSubmit={(e) => void handleAddMilestoneSubmit(e)} className="flex items-center gap-1.5">
-            <input
-              type="text"
-              value={milestoneTitle}
-              onChange={(e) => setMilestoneTitle(e.target.value)}
-              placeholder="Yeni kilometre taşı ekle…"
-              maxLength={80}
-              className="select-text flex-1 bg-transparent text-xs text-app-primary placeholder-app-muted outline-none px-3 py-2 rounded-xl border"
+          {/* Taşmasız Kilometre Taşı Ekleme Formu */}
+          <form
+            onSubmit={(e) => void handleAddMilestoneSubmit(e)}
+            className="space-y-2"
+          >
+            <div
+              className="flex items-center gap-1.5 p-1.5 rounded-xl border"
               style={{ borderColor: 'var(--border)', background: 'var(--bg-2)' }}
-            />
-            <input
-              type="date"
-              value={milestoneDate}
-              onChange={(e) => setMilestoneDate(e.target.value)}
-              aria-label="Hedef tarih"
-              className="text-[11px] text-app-secondary px-2 py-1.5 rounded-xl border outline-none"
-              style={{ borderColor: 'var(--border)', background: 'var(--bg-2)' }}
-            />
-            <button
-              type="submit"
-              disabled={!milestoneTitle.trim()}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-all active:scale-95 flex-shrink-0"
-              style={{ background: selectedProject.color }}
-              aria-label="Kilometre taşı ekle"
             >
-              <Plus size={15} />
-            </button>
+              <input
+                type="text"
+                value={milestoneTitle}
+                onChange={(e) => setMilestoneTitle(e.target.value)}
+                placeholder="Kilometre taşı ekle…"
+                maxLength={80}
+                className="select-text flex-1 min-w-0 bg-transparent text-xs text-app-primary placeholder-app-muted outline-none px-2 py-1.5"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowMilestoneDate((v) => !v)}
+                aria-label="Hedef tarih seç"
+                title="Hedef tarih ekle"
+                className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors flex-shrink-0 cursor-pointer"
+                style={{
+                  background:
+                    showMilestoneDate || milestoneDate ? 'var(--primary-dim)' : 'transparent',
+                  color:
+                    showMilestoneDate || milestoneDate
+                      ? 'var(--primary-light)'
+                      : 'var(--text-muted)',
+                }}
+              >
+                <Calendar size={15} />
+              </button>
+
+              <button
+                type="submit"
+                disabled={!milestoneTitle.trim()}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-white disabled:opacity-40 transition-transform active:scale-95 flex-shrink-0 cursor-pointer"
+                style={{ background: selectedProject.color }}
+                aria-label="Kilometre taşı ekle"
+              >
+                <Plus size={16} strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {showMilestoneDate && (
+              <div className="flex items-center justify-between gap-2 px-1 animate-fade-in">
+                <label className="text-xs text-app-secondary font-medium">
+                  Hedef tarih (isteğe bağlı)
+                </label>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="date"
+                    value={milestoneDate}
+                    onChange={(e) => setMilestoneDate(e.target.value)}
+                    aria-label="Hedef tarih"
+                    className="text-xs text-app-primary px-2.5 py-1.5 rounded-lg border outline-none"
+                    style={{ borderColor: 'var(--border)', background: 'var(--bg-2)' }}
+                  />
+                  {milestoneDate && (
+                    <button
+                      type="button"
+                      onClick={() => setMilestoneDate('')}
+                      aria-label="Tarihi temizle"
+                      className="p-1.5 rounded-lg text-app-muted hover:text-app-primary cursor-pointer"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </form>
-        </div>
+        </section>
 
         {/* Projeye Hızlı Görev Ekle */}
         <form
           onSubmit={(e) => void handleAddProjectTask(e)}
-          className="rounded-2xl border p-2.5 mb-4 flex items-center gap-2"
+          className="rounded-2xl p-1.5 pl-3 mb-4 flex items-center gap-2 border"
           style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
         >
           <input
             type="text"
             value={projectTaskTitle}
             onChange={(e) => setProjectTaskTitle(e.target.value)}
-            placeholder={`${selectedProject.name} için yeni görev…`}
+            placeholder="Bu projeye görev ekle…"
             maxLength={120}
-            className="select-text flex-1 bg-transparent text-xs sm:text-sm text-app-primary placeholder-app-muted outline-none px-2 font-medium"
+            className="select-text flex-1 min-w-0 bg-transparent text-sm text-app-primary placeholder-app-muted outline-none py-1.5"
           />
           <button
             type="submit"
             disabled={!projectTaskTitle.trim()}
-            className="w-8 h-8 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-all active:scale-90 flex-shrink-0"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-transform active:scale-95 flex-shrink-0 cursor-pointer"
             style={{ background: selectedProject.color }}
             aria-label="Projeye görev ekle"
           >
-            <Plus size={16} />
+            <Plus size={16} strokeWidth={2.5} />
           </button>
         </form>
 
         {/* Proje Görevleri (Bekleyen & Tamamlanan) */}
         <div className="space-y-4">
           <div>
-            <p className="text-app-muted text-[11px] font-bold uppercase tracking-wider mb-2.5">
-              Bekleyen Proje Görevleri ({activeProjectTasks.length})
+            <p className="text-app-muted text-xs font-medium uppercase mb-2">
+              Bekleyen Görevler · {activeProjectTasks.length}
             </p>
             {activeProjectTasks.length > 0 ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {activeProjectTasks.map((t) => (
                   <TaskCard
                     key={t.id}
@@ -646,7 +693,7 @@ export function ProjectsView({
                 ))}
               </div>
             ) : (
-              <p className="text-app-muted text-xs py-4 text-center rounded-2xl border border-dashed border-app">
+              <p className="text-app-muted text-xs py-4 text-center">
                 Bu projede bekleyen görev yok.
               </p>
             )}
@@ -654,10 +701,10 @@ export function ProjectsView({
 
           {completedProjectTasks.length > 0 && (
             <div>
-              <p className="text-app-muted text-[11px] font-bold uppercase tracking-wider mb-2.5">
-                Tamamlanan Görevler ({completedProjectTasks.length})
+              <p className="text-app-muted text-xs font-medium uppercase mb-2">
+                Tamamlanan Görevler · {completedProjectTasks.length}
               </p>
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {completedProjectTasks.map((t) => (
                   <TaskCard
                     key={t.id}
@@ -675,16 +722,16 @@ export function ProjectsView({
           {/* Bu Projeye Ait Öğrenme Notları */}
           {projectLearnings.length > 0 && (
             <div className="pt-2">
-              <p className="text-app-muted text-[11px] font-bold uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <p className="text-app-muted text-xs font-medium uppercase mb-2 flex items-center gap-1.5">
                 <BookOpen size={12} className="text-indigo-400" />
-                <span>Proje Öğrenme Notları ({projectLearnings.length})</span>
+                <span>Öğrenme Notları · {projectLearnings.length}</span>
               </p>
               <div className="space-y-2">
                 {projectLearnings.map((l) => (
                   <div
                     key={l.id}
-                    className="rounded-2xl p-3.5 border"
-                    style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+                    className="rounded-2xl p-3.5"
+                    style={{ background: 'var(--surface)' }}
                   >
                     <p className="text-app-primary text-xs leading-relaxed">{l.content}</p>
                     <div className="flex items-center justify-between gap-2 mt-2">
