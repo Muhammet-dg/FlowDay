@@ -6,7 +6,7 @@ const STORAGE_KEY = 'app-theme';
 
 const THEME_META_COLORS: Record<Theme, string> = {
   dark: '#16151E',
-  light: '#FBF7F0',
+  light: '#F3E9DC',
 };
 
 function getStoredTheme(): Theme | null {

@@ -128,59 +128,68 @@
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Aydınlık Tema (Güneşli Sabah — Sıcak Krem & Şeftali Atmosferi) ── */
+/* ── Aydınlık Tema (Sıcak Şeftali & Sabah Işığı — Samimi ve Canlı) ── */
 [data-theme="light"] {
-  --bg: #FBF7F0;
-  /* Güneşli sıcak krem temel zemin */
-  --bg-2: #F3ECE0;
-  /* Sıcak latte / kum ikincil yüzey */
-  --bg-gradient: linear-gradient(155deg, #FFFBF5 0%, #FAF3E8 52%, #F5ECE0 100%);
-  --bg-orb-1: radial-gradient(circle at 50% 50%, rgba(139, 124, 246, 0.15) 0%, rgba(251, 146, 60, 0.07) 48%, transparent 74%);
-  --bg-orb-2: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.17) 0%, rgba(52, 211, 153, 0.07) 48%, transparent 74%);
-  --bg-pattern-dot: rgba(120, 100, 84, 0.14);
-  --bg-contour-stroke: rgba(109, 98, 232, 0.10);
-  --bg-contour-stroke-2: rgba(234, 145, 58, 0.09);
-  --frame-shadow: 0 20px 60px rgba(68, 52, 38, 0.10);
+  --bg: #F3E9DC;
+  /* Sıcak kum-şeftali temel zemin — düz beyaz yerine samimi derinlik */
+  --bg-2: #EBDDCB;
+  /* Sıcak bisküvi / latte ikincil yüzey */
+  --bg-gradient: linear-gradient(150deg, #F8EEE2 0%, #F2E5D5 48%, #EFE2DB 100%);
+  --bg-orb-1: radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.28) 0%, rgba(244, 114, 182, 0.12) 45%, transparent 74%);
+  --bg-orb-2: radial-gradient(circle at 50% 50%, rgba(129, 140, 248, 0.24) 0%, rgba(45, 212, 191, 0.12) 48%, transparent 74%);
+  --bg-pattern-dot: rgba(138, 106, 84, 0.20);
+  --bg-contour-stroke: rgba(234, 115, 72, 0.18);
+  --bg-contour-stroke-2: rgba(102, 90, 224, 0.14);
+  --frame-shadow: 0 22px 64px rgba(92, 64, 42, 0.14);
 
-  --surface: rgba(255, 253, 249, 0.90);
-  /* Sıcak porselen kart yüzeyi */
-  --surface-2: rgba(244, 237, 227, 0.92);
-  /* İkincil yüzey */
-  --surface-hover: rgba(238, 229, 216, 0.95);
-  --surface-alt: rgba(255, 253, 249, 0.94);
+  --surface: rgba(255, 253, 250, 0.90);
+  /* Sıcak fildişi kart — şeftali-kum zeminin üzerinde net ayrışır */
+  --surface-2: rgba(247, 237, 224, 0.92);
+  /* Yumuşak krem-bisküvi ikincil yüzey */
+  --surface-hover: rgba(241, 227, 210, 0.96);
+  --surface-alt: rgba(255, 252, 248, 0.94);
 
-  --border: rgba(68, 54, 42, 0.08);
-  --border-strong: rgba(68, 54, 42, 0.13);
-  --border-focus: rgba(109, 98, 232, 0.50);
+  --border: rgba(120, 86, 62, 0.11);
+  --border-strong: rgba(120, 86, 62, 0.18);
+  --border-focus: rgba(102, 90, 224, 0.52);
 
-  --text-primary: #211C18;
-  /* Sıcak koyu espresso mürekkebi (WCAG AAA) */
-  --text-secondary: #4C443D;
-  /* Sıcak koyu kahve-gri (WCAG AA+) */
-  --text-muted: #6E645C;
-  /* Sıcak taş grisi (WCAG AA) */
-  --text-faint: #8F847A;
-  /* Yardımcı gri */
+  --text-primary: #221B16;
+  /* Sıcak koyu kahve-espresso (WCAG AAA) */
+  --text-secondary: #51443A;
+  /* Sıcak tarçın-kahve grisi (WCAG AA+) */
+  --text-muted: #726358;
+  /* Sıcak taş-toprak tonu (WCAG AA) */
+  --text-faint: #96867A;
+  /* Yardımcı sıcak gri */
 
-  --nav-bg: rgba(255, 252, 247, 0.90);
+  --nav-bg: rgba(255, 251, 245, 0.90);
   --input-bg: rgba(255, 253, 250, 0.96);
-  --sheet-bg: #FCF8F2;
-  --overlay: rgba(33, 26, 20, 0.40);
+  --sheet-bg: #FAF3E9;
+  --overlay: rgba(42, 30, 22, 0.38);
 
-  --primary: #6D62E8;
-  /* Samimi sıcak iris (Light kontrast) */
-  --primary-hover: #5B50DB;
-  --primary-light: #7E74F2;
-  --primary-dim: rgba(109, 98, 232, 0.11);
-  --primary-glow: rgba(109, 98, 232, 0.24);
+  --primary: #665AE0;
+  /* Canlı sıcak iris-lavanta */
+  --primary-hover: #5548D4;
+  --primary-light: #7D72EE;
+  --primary-dim: rgba(102, 90, 224, 0.13);
+  --primary-glow: rgba(102, 90, 224, 0.28);
 
-  --success: #059669;
+  --success: #0D9668;
   --success-light: #10B981;
-  --success-dim: rgba(16, 185, 129, 0.12);
+  --success-dim: rgba(13, 150, 104, 0.14);
 
-  --priority-low: #64748B;
+  --priority-low: #78716C;
   --priority-medium: #D97706;
-  --priority-high: #DC2626;
+  --priority-high: #E11D48;
+}
+
+/* Gündüz modunda kartlara sıcak ve hafif derinlik */
+[data-theme="light"] .bg-surface {
+  box-shadow: 0 2px 10px rgba(104, 72, 46, 0.05);
+}
+
+[data-theme="light"] .glass-nav {
+  box-shadow: 0 10px 30px rgba(104, 72, 46, 0.10);
 }
 
 /* ══════════════════════════════════════════════════════════════
