@@ -312,8 +312,6 @@ function App() {
         >
           {showHeader && (
             <Header
-              activeCount={activeTasks.length + todayRoutineCounts.pendingCount}
-              completedCount={completedTasks.length + todayRoutineCounts.doneCount}
               streak={streak}
               theme={theme}
               onToggleTheme={toggleTheme}

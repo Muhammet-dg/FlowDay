@@ -8,6 +8,7 @@ import {
   Sparkles,
   Layers,
   Check,
+  ChevronRight,
 } from 'lucide-react';
 import type { Project, ProjectIconName, Task } from '../types';
 
@@ -62,8 +63,8 @@ export function TodayProjectsStrip({
   const todayPrefix = getTodayDatePrefix();
 
   return (
-    <div className="px-4 mb-2 select-none">
-      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+    <section className="px-4 mb-3 select-none" aria-label="Aktif projeler">
+      <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-0.5">
         {activeProjects.map((project) => {
           const projectTasks = tasks.filter((t) => t.project_id === project.id);
           const activeProjectTasks = projectTasks.filter((t) => !t.completed);
@@ -79,20 +80,18 @@ export function TodayProjectsStrip({
               type="button"
               onClick={() => onOpenProjectDetail(project.id)}
               title={`${project.name} proje detayını aç`}
-              className="min-w-[116px] max-w-[144px] min-h-[38px] px-3 py-1.5 rounded-xl flex items-center justify-between gap-2 transition-colors duration-150 active:scale-95 flex-shrink-0 cursor-pointer"
+              className="min-h-[40px] max-w-[216px] px-3 py-2 rounded-xl flex items-center gap-2 transition-colors duration-150 active:scale-[0.98] flex-shrink-0 cursor-pointer hover:bg-surface-hover"
               style={{
                 background: 'var(--surface)',
-                border: '1px solid var(--border)',
               }}
             >
-              <span className="flex items-center gap-1.5 min-w-0">
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: project.color }}
-                />
-                <span className="text-app-primary text-xs font-semibold truncate">
-                  {project.name}
-                </span>
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0"
+                style={{ background: project.color }}
+                aria-hidden="true"
+              />
+              <span className="text-app-primary text-xs font-medium truncate">
+                {project.name}
               </span>
 
               {isAllTodayDone ? (
@@ -100,14 +99,20 @@ export function TodayProjectsStrip({
                   <Check size={10} strokeWidth={3} />
                 </span>
               ) : todayTotal > 0 ? (
-                <span className="text-app-secondary text-xs font-medium tabular-nums flex-shrink-0">
+                <span className="text-app-muted text-xs font-medium tabular-nums flex-shrink-0">
                   {completedToday.length}/{todayTotal}
                 </span>
-              ) : null}
+              ) : (
+                <ChevronRight
+                  size={13}
+                  className="text-app-muted flex-shrink-0"
+                  aria-hidden="true"
+                />
+              )}
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -5,7 +5,6 @@ import {
   Plus,
   RotateCcw,
   SkipForward,
-  SlidersHorizontal,
   Clock,
 } from 'lucide-react';
 import type { TodayRoutineItem } from '../hooks/useRoutines';
@@ -177,27 +176,27 @@ const RoutineRowCard = memo(function RoutineRowCard({
   if (isSkipped) {
     return (
       <div
-        className="rounded-xl px-3 py-1.5 border flex items-center justify-between gap-2 opacity-60 transition-opacity"
-        style={{ background: 'var(--bg-2)', borderColor: 'var(--border)' }}
+        className="rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 opacity-65 transition-opacity"
+        style={{ background: 'var(--surface)' }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs" aria-hidden="true">
-            {routine.icon}
-          </span>
+          <span
+            className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+            style={{ background: 'var(--text-muted)' }}
+            aria-hidden="true"
+          />
           <span className="text-xs text-app-muted line-through truncate">
             {routine.title}
           </span>
-          <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-surface text-app-muted">
-            Bugün atlandı
-          </span>
+          <span className="text-xs text-app-muted flex-shrink-0">· Atlandı</span>
         </div>
         <button
           type="button"
           onClick={() => onSkip(routine.id)}
-          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-300 hover:text-indigo-200 px-2 py-1 rounded-lg cursor-pointer"
+          className="inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 px-2 min-h-[36px] rounded-lg cursor-pointer"
           aria-label="Atlamayı geri al"
         >
-          <RotateCcw size={11} />
+          <RotateCcw size={12} />
           <span>Geri Al</span>
         </button>
       </div>
@@ -217,7 +216,7 @@ const RoutineRowCard = memo(function RoutineRowCard({
             width: '55%',
           }}
         >
-          <div className="flex items-center gap-1.5 text-white font-bold text-xs">
+          <div className="flex items-center gap-1.5 text-white font-semibold text-xs">
             <Check size={14} strokeWidth={2.8} />
             <span>{isDone ? 'Geri Al' : 'Tamamla'}</span>
           </div>
@@ -232,14 +231,14 @@ const RoutineRowCard = memo(function RoutineRowCard({
             width: '55%',
           }}
         >
-          <div className="flex items-center gap-1.5 text-white font-bold text-xs">
+          <div className="flex items-center gap-1.5 text-white font-semibold text-xs">
             <span>Bugün Atla</span>
             <SkipForward size={13} />
           </div>
         </div>
       </div>
 
-      {/* ─── Tek Satırlık Kompakt Rutin Kartı ─── */}
+      {/* ─── Sakin, Tek Tip Kompakt Rutin Satırı ─── */}
       <div
         ref={cardRef}
         onPointerDown={handlePointerDown}
@@ -258,23 +257,16 @@ const RoutineRowCard = memo(function RoutineRowCard({
           }
           onOpenDetail(routine.id);
         }}
-        className={`relative rounded-2xl border px-3 py-2 flex items-center gap-2 transition-colors cursor-pointer ${
-          isDone ? 'opacity-75 bg-surface/80' : 'bg-surface hover:bg-surface-hover'
+        className={`relative rounded-2xl px-3 py-2 flex items-center gap-2 transition-colors cursor-pointer ${
+          isDone ? 'opacity-70 bg-surface/75' : 'bg-surface hover:bg-surface-hover'
         }`}
         style={{
-          borderColor: isDone ? 'rgba(16, 185, 129, 0.30)' : 'var(--border)',
           touchAction: 'pan-y',
           willChange: 'transform',
         }}
       >
-        {/* Sol İnce Renk Şeridi */}
-        <div
-          className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full"
-          style={{ background: isDone ? '#10B981' : routine.color }}
-        />
-
         {/* Sol: Onay Kutusu (44x44px Dokunma Alanı) */}
-        <div className="relative flex-shrink-0 -ml-1">
+        <div className="relative flex-shrink-0 -ml-1.5">
           {justCompleted && (
             <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
               {SPARKLE_BURSTS.map((sb, idx) => (
@@ -311,12 +303,12 @@ const RoutineRowCard = memo(function RoutineRowCard({
               style={
                 isDone
                   ? {
-                      background: '#10B981',
-                      border: '1.5px solid #10B981',
+                      background: 'var(--success)',
+                      border: '1.5px solid var(--success)',
                     }
                   : {
                       background: 'transparent',
-                      border: `1.5px solid ${routine.color}`,
+                      border: '1.5px solid var(--primary-light)',
                     }
               }
             >
@@ -337,15 +329,12 @@ const RoutineRowCard = memo(function RoutineRowCard({
           </button>
         </div>
 
-        {/* Orta: İkon + Ad + "Rutin" Rozeti + Saat / İlerleme */}
+        {/* Orta: Sade Başlık + İsteğe Bağlı Saat / Sayaç İlerlemesi */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm flex-shrink-0" aria-hidden="true">
-              {routine.icon}
-            </span>
+          <div className="flex items-center gap-2 min-w-0">
             <span className="relative min-w-0 inline-block max-w-full">
               <span
-                className={`text-sm font-semibold truncate block ${
+                className={`text-sm font-medium truncate block ${
                   isDone ? 'text-app-muted' : 'text-app-primary'
                 }`}
               >
@@ -353,82 +342,64 @@ const RoutineRowCard = memo(function RoutineRowCard({
               </span>
               {isDone && (
                 <span
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-[1.5px] bg-emerald-500/85 rounded-full animate-strike-draw pointer-events-none"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-[1.5px] bg-emerald-500/80 rounded-full animate-strike-draw pointer-events-none"
                   style={{ width: '100%' }}
                 />
               )}
             </span>
 
-            <span
-              className="px-1.5 py-0.2 rounded text-xs font-semibold flex-shrink-0"
-              style={{
-                background: `${routine.color}18`,
-                color: routine.color,
-              }}
-            >
-              Rutin
-            </span>
-
             {routine.time && (
-              <span className="inline-flex items-center gap-0.5 text-xs text-app-secondary tabular-nums flex-shrink-0">
+              <span className="inline-flex items-center gap-1 text-xs text-app-muted tabular-nums flex-shrink-0">
                 <Clock size={11} aria-hidden="true" />
                 <span>{routine.time}</span>
               </span>
             )}
           </div>
 
-          {/* Sayaçlı Rutinse İnce İlerleme Çubuğu */}
           {isCounterRoutine && (
             <div className="flex items-center gap-2 mt-1">
               <div
-                className="flex-1 h-1 rounded-full overflow-hidden max-w-[110px]"
+                className="flex-1 h-1 rounded-full overflow-hidden max-w-[100px]"
                 style={{ background: 'var(--surface-2)' }}
               >
                 <div
                   className="h-full rounded-full transition-all duration-200"
                   style={{
                     width: `${progressPct}%`,
-                    background: isDone ? '#10B981' : routine.color,
+                    background: isDone ? 'var(--success)' : 'var(--primary)',
                   }}
                 />
               </div>
-              <span className="text-xs font-semibold text-app-secondary tabular-nums">
+              <span className="text-xs font-medium text-app-secondary tabular-nums">
                 {currentCount}/{targetCount}
               </span>
             </div>
           )}
         </div>
 
-        {/* Sağ: Sayaçlıysa +1 Butonu ve Küçük Seri (🔥 5) Göstergesi */}
-        <div className="flex items-center gap-1.5 flex-shrink-0">
+        {/* Sağ: Sayaçlıysa +1 Butonu + Sessiz Seri Göstergesi */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           {isCounterRoutine && !isDone && (
             <button
               type="button"
               onClick={handleIncrement}
               aria-label={`${routine.title} sayacını 1 artır`}
-              className="min-w-[36px] h-8 px-2 rounded-xl text-xs font-bold text-white transition-transform active:scale-90 cursor-pointer"
-              style={{ background: routine.color }}
+              className="min-w-[36px] h-8 px-2.5 rounded-xl text-xs font-semibold text-white transition-transform active:scale-90 cursor-pointer"
+              style={{ background: 'var(--primary)' }}
             >
               +1
             </button>
           )}
 
-          <div
-            className="inline-flex items-center gap-0.5 px-2 py-1 rounded-lg text-xs font-bold tabular-nums"
-            style={{
-              background:
-                streak > 0 ? 'rgba(245, 158, 11, 0.12)' : 'var(--surface-2)',
-              color: streak > 0 ? '#FBBF24' : 'var(--text-muted)',
-            }}
-            title={`${streak} günlük rutin serisi`}
-          >
-            <Flame
-              size={11}
-              className={streak > 0 ? 'fill-amber-400 text-amber-400' : 'text-app-muted'}
-              aria-hidden="true"
-            />
-            <span>{streak}</span>
-          </div>
+          {streak > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 text-xs font-medium text-app-secondary tabular-nums"
+              title={`${streak} günlük rutin serisi`}
+            >
+              <Flame size={12} className="text-amber-400" aria-hidden="true" />
+              <span>{streak}</span>
+            </span>
+          )}
         </div>
       </div>
     </div>
@@ -447,30 +418,21 @@ export const TodayRoutinesSection = memo(function TodayRoutinesSection({
 }: TodayRoutinesSectionProps) {
   const [collapsed, setCollapsed] = useState(false);
 
-  // Hiç rutin tanımlanmamışsa tek satırlık sade davet çipi göster
   if (totalRoutinesCount === 0) {
     return (
-      <div className="px-4 mb-3">
+      <div className="px-4 mb-4">
         <button
           type="button"
           onClick={() => onOpenManager()}
-          className="w-full rounded-2xl px-3.5 py-2.5 border border-dashed flex items-center justify-between gap-2 text-left transition-colors hover:bg-surface/60 cursor-pointer"
-          style={{ borderColor: 'var(--border-strong)', background: 'var(--surface)' }}
+          className="w-full min-h-[44px] rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 text-left transition-colors hover:bg-surface-hover cursor-pointer"
+          style={{ background: 'var(--surface)' }}
         >
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm" aria-hidden="true">
-              🔁
-            </span>
-            <span className="text-xs font-medium text-app-secondary truncate">
-              Günlük rutin ekle (Su iç, Kitap oku, Spor…)
-            </span>
-          </div>
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold flex-shrink-0"
-            style={{ background: 'var(--primary-dim)', color: 'var(--primary-light)' }}
-          >
-            <Plus size={12} />
-            <span>Oluştur</span>
+          <span className="text-xs font-medium text-app-secondary truncate">
+            Günlük rutin ekle (Su iç, Kitap oku, Spor…)
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-400 flex-shrink-0">
+            <Plus size={13} />
+            <span>Ekle</span>
           </span>
         </button>
       </div>
@@ -478,30 +440,18 @@ export const TodayRoutinesSection = memo(function TodayRoutinesSection({
   }
 
   return (
-    <div className="px-4 mb-3 select-none">
-      {/* Başlık Satırı: "Rutinler 3/5" + Yönet / Ekle */}
+    <section className="px-4 mb-4 select-none" aria-label="Bugünün rutinleri">
+      {/* Başlık Satırı: "RUTİNLER · 1/3" + Yönet */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className="inline-flex items-center gap-2 text-left cursor-pointer"
+          className="inline-flex items-center gap-2 min-h-[32px] text-left cursor-pointer"
         >
-          <span className="text-app-muted text-xs font-medium uppercase tracking-wider">
+          <span className="text-app-muted text-xs font-medium uppercase">
             Rutinler
           </span>
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-bold tabular-nums"
-            style={{
-              background:
-                totalPlanned > 0 && doneCount === totalPlanned
-                  ? 'rgba(16, 185, 129, 0.14)'
-                  : 'var(--surface)',
-              color:
-                totalPlanned > 0 && doneCount === totalPlanned
-                  ? '#34D399'
-                  : 'var(--text-secondary)',
-            }}
-          >
+          <span className="text-xs font-semibold text-app-secondary tabular-nums">
             {doneCount}/{totalPlanned}
           </span>
         </button>
@@ -509,18 +459,17 @@ export const TodayRoutinesSection = memo(function TodayRoutinesSection({
         <button
           type="button"
           onClick={() => onOpenManager()}
-          className="inline-flex items-center gap-1 text-xs font-medium text-app-secondary hover:text-app-primary px-2 py-1 rounded-lg transition-colors cursor-pointer"
+          className="text-xs font-medium text-app-muted hover:text-app-primary px-2 min-h-[32px] inline-flex items-center rounded-lg transition-colors cursor-pointer"
           aria-label="Rutinleri yönet"
         >
-          <SlidersHorizontal size={12} />
-          <span>Yönet</span>
+          Yönet
         </button>
       </div>
 
-      {/* Bugünün Planlı Rutin Kartları */}
+      {/* Bugünün Planlı Rutin Satırları */}
       {!collapsed &&
         (items.length > 0 ? (
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {items.map((item) => (
               <RoutineRowCard
                 key={item.routine.id}
@@ -533,20 +482,10 @@ export const TodayRoutinesSection = memo(function TodayRoutinesSection({
             ))}
           </div>
         ) : (
-          <div
-            className="rounded-xl px-3 py-2 border flex items-center justify-between text-xs text-app-secondary"
-            style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
-          >
-            <span>Bugün için planlı rutin yok.</span>
-            <button
-              type="button"
-              onClick={() => onOpenManager()}
-              className="text-indigo-300 font-semibold hover:underline cursor-pointer"
-            >
-              Rutinleri Gör
-            </button>
-          </div>
+          <p className="text-xs text-app-muted py-1">
+            Bugün için planlı rutin yok.
+          </p>
         ))}
-    </div>
+    </section>
   );
 });

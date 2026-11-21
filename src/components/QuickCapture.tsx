@@ -332,7 +332,7 @@ export function QuickCapture({
   );
 
   return (
-    <div ref={containerRef} className="px-4 mb-3 select-none">
+    <div ref={containerRef} className="px-4 mb-4 select-none">
       <form
         onSubmit={handleSubmit}
         className="rounded-2xl border transition-colors duration-150 overflow-hidden"

@@ -902,8 +902,10 @@ export function StatsView({
                     y={84}
                     textAnchor="middle"
                     fill="var(--text-muted)"
-                    fontSize="8"
+                    fontSize="9.5"
                     fontWeight="600"
+                    className="tabular-nums"
+                    style={{ fontFamily: 'var(--font-sans)' }}
                   >
                     {c.label}
                   </text>
