@@ -5,8 +5,8 @@ export type Theme = 'dark' | 'light';
 const STORAGE_KEY = 'app-theme';
 
 const THEME_META_COLORS: Record<Theme, string> = {
-  dark: '#0A0D14',
-  light: '#F7F5F0',
+  dark: '#16151E',
+  light: '#FBF7F0',
 };
 
 function getStoredTheme(): Theme | null {

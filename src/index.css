@@ -60,106 +60,127 @@
 /* ── Karanlık Tema (Varsayılan — Derin Grafit / Obsidyen) ───── */
 :root,
 [data-theme="dark"] {
-  /* Tipografi Tokenları (Tek satırda değiştirilebilir) */
-  --font-sans:    'Figtree', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Sora', 'Figtree', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono:    ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
+  --font-sans: 'Figtree', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', monospace;
 
-  --bg:            #0A0D14;   /* Obsidian Twilight temel zemin */
-  --bg-2:          #101420;   /* İkincil derin yüzey */
-  --bg-gradient:   linear-gradient(160deg, #0D111C 0%, #0A0D14 52%, #080B12 100%);
-  --bg-orb-1:      radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.16) 0%, rgba(79, 70, 229, 0.06) 44%, transparent 72%);
-  --bg-orb-2:      radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.11) 0%, rgba(14, 165, 233, 0.04) 46%, transparent 72%);
-  --bg-pattern-dot: rgba(148, 163, 184, 0.14);
-  --bg-contour-stroke:   rgba(129, 140, 248, 0.085);
-  --bg-contour-stroke-2: rgba(52, 211, 153, 0.055);
-  --frame-shadow:  0 24px 80px rgba(0, 0, 0, 0.62);
+  --bg: #16151E;
+  /* Sıcak Alacakaranlık temel zemin — kasvetli siyah yerine yumuşak sıcak füme */
+  --bg-2: #1F1D2A;
+  /* İkincil sıcak yüzey */
+  --bg-gradient: linear-gradient(155deg, #211D30 0%, #171620 48%, #1C1821 100%);
+  --bg-orb-1: radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.22) 0%, rgba(251, 146, 60, 0.08) 46%, transparent 74%);
+  --bg-orb-2: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.14) 0%, rgba(52, 211, 153, 0.09) 48%, transparent 74%);
+  --bg-pattern-dot: rgba(235, 226, 245, 0.13);
+  --bg-contour-stroke: rgba(196, 181, 253, 0.11);
+  --bg-contour-stroke-2: rgba(253, 186, 116, 0.09);
+  --frame-shadow: 0 24px 80px rgba(10, 8, 18, 0.55);
 
-  --surface:       rgba(19, 23, 34, 0.84);   /* Sakin füme cam kart yüzeyi */
-  --surface-2:     rgba(28, 34, 48, 0.88);   /* İkincil kart / buton yüzeyi */
-  --surface-hover: rgba(35, 42, 58, 0.92);
-  --surface-alt:   rgba(19, 23, 34, 0.86);
+  --surface: rgba(34, 31, 46, 0.86);
+  /* Sıcak, davetkar alacakaranlık kart yüzeyi */
+  --surface-2: rgba(46, 42, 62, 0.90);
+  /* İkincil kart / buton yüzeyi */
+  --surface-hover: rgba(56, 51, 75, 0.94);
+  --surface-alt: rgba(34, 31, 46, 0.88);
 
-  /* %9 - %14 opaklıkta rafine sınır çizgileri */
-  --border:        rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --border-focus:  rgba(99, 102, 241, 0.55);
+  /* Yumuşak inci tonlu ince sınır çizgileri */
+  --border: rgba(248, 242, 255, 0.09);
+  --border-strong: rgba(248, 242, 255, 0.15);
+  --border-focus: rgba(139, 124, 246, 0.62);
 
-  /* WCAG AA/AAA uyumlu tipografi kontrastları */
-  --text-primary:   #F3F4F6;   /* Kırık beyaz / yüksek okunabilirlik */
-  --text-secondary: #C0C8D4;   /* Yüksek kontrastlı ikincil metin (WCAG AA+) */
-  --text-muted:     #94A3B8;   /* İkincil meta etiketler (WCAG AA >= 4.5:1) */
-  --text-faint:     #64748B;   /* İnce detaylar */
+  /* WCAG AA/AAA uyumlu sıcak tipografi kontrastları */
+  --text-primary: #F9F7F3;
+  /* Sıcak krem beyaz — gözü yormayan yumuşak parlaklık */
+  --text-secondary: #D4CEC8;
+  /* Sıcak taş grisi (WCAG AA+) */
+  --text-muted: #A69F9E;
+  /* Sıcak boz-gri ikincil etiketler (WCAG AA >= 4.5:1) */
+  --text-faint: #787176;
+  /* İnce detaylar */
 
   /* Yüzen bar & modallar */
-  --nav-bg:    rgba(18, 22, 32, 0.84);
-  --input-bg:  rgba(18, 22, 32, 0.90);
-  --sheet-bg:  #121621;
-  --overlay:   rgba(6, 8, 14, 0.72);
+  --nav-bg: rgba(31, 28, 43, 0.88);
+  --input-bg: rgba(31, 28, 43, 0.92);
+  --sheet-bg: #1E1C2A;
+  --overlay: rgba(12, 10, 20, 0.68);
 
-  /* Vurgu (Accent) Renkleri — Rafine Tonlar */
-  --primary:       #6366F1;   /* Sıcak İndigo */
-  --primary-hover: #4F46E5;
-  --primary-light: #818CF8;
-  --primary-dim:   rgba(99, 102, 241, 0.14);
-  --primary-glow:  rgba(99, 102, 241, 0.28);
+  /* Samimi ve Sıcak Vurgu (Accent) Renkleri */
+  --primary: #7E74F2;
+  /* Samimi Sıcak İris / Lavanta */
+  --primary-hover: #6D62E8;
+  --primary-light: #A9A1FF;
+  --primary-dim: rgba(126, 116, 242, 0.16);
+  --primary-glow: rgba(126, 116, 242, 0.34);
 
-  --success:       #10B981;   /* Adaçayı yeşili / zümrüt */
-  --success-light: #34D399;
-  --success-dim:   rgba(16, 185, 129, 0.12);
+  --success: #22C58B;
+  /* Taze nane / sıcak zümrüt */
+  --success-light: #4ADEA8;
+  --success-dim: rgba(34, 197, 139, 0.14);
 
-  --priority-low:    #64748B; /* Yumuşak arduvaz mavisi */
-  --priority-medium: #F59E0B; /* Sıcak kehribar / amber */
-  --priority-high:   #EF4444; /* Kiremit / terrakotta kırmızısı */
+  --priority-low: #8C8899;
+  /* Yumuşak lavanta-gri */
+  --priority-medium: #FBBF24;
+  /* Sıcak bal kehribarı */
+  --priority-high: #FB7185;
+  /* Sıcak mercan gülü */
 
-  --safe-area-top:    env(safe-area-inset-top, 0px);
+  --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* ── Aydınlık Tema (Warm Daylight Paper — Sabah Işığı Defter Atmosferi) ── */
+/* ── Aydınlık Tema (Güneşli Sabah — Sıcak Krem & Şeftali Atmosferi) ── */
 [data-theme="light"] {
-  --bg:            #F7F5F0;   /* Sıcak editorial kağıt temel zemin */
-  --bg-2:          #EFECE4;   /* Yumuşak kum / taş ikincil yüzey */
-  --bg-gradient:   linear-gradient(160deg, #FAF8F4 0%, #F5F2EB 54%, #F2EEE5 100%);
-  --bg-orb-1:      radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.11) 0%, rgba(129, 140, 248, 0.04) 48%, transparent 74%);
-  --bg-orb-2:      radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.10) 0%, rgba(16, 185, 129, 0.04) 48%, transparent 74%);
-  --bg-pattern-dot: rgba(71, 85, 105, 0.15);
-  --bg-contour-stroke:   rgba(79, 70, 229, 0.08);
-  --bg-contour-stroke-2: rgba(217, 119, 6, 0.065);
-  --frame-shadow:  0 20px 60px rgba(15, 23, 42, 0.10);
+  --bg: #FBF7F0;
+  /* Güneşli sıcak krem temel zemin */
+  --bg-2: #F3ECE0;
+  /* Sıcak latte / kum ikincil yüzey */
+  --bg-gradient: linear-gradient(155deg, #FFFBF5 0%, #FAF3E8 52%, #F5ECE0 100%);
+  --bg-orb-1: radial-gradient(circle at 50% 50%, rgba(139, 124, 246, 0.15) 0%, rgba(251, 146, 60, 0.07) 48%, transparent 74%);
+  --bg-orb-2: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.17) 0%, rgba(52, 211, 153, 0.07) 48%, transparent 74%);
+  --bg-pattern-dot: rgba(120, 100, 84, 0.14);
+  --bg-contour-stroke: rgba(109, 98, 232, 0.10);
+  --bg-contour-stroke-2: rgba(234, 145, 58, 0.09);
+  --frame-shadow: 0 20px 60px rgba(68, 52, 38, 0.10);
 
-  --surface:       rgba(255, 255, 255, 0.88);   /* Yarı şeffaf saf kağıt kart */
-  --surface-2:     rgba(241, 237, 229, 0.90);   /* İkincil yüzey */
-  --surface-hover: rgba(235, 230, 220, 0.94);
-  --surface-alt:   rgba(255, 255, 255, 0.92);
+  --surface: rgba(255, 253, 249, 0.90);
+  /* Sıcak porselen kart yüzeyi */
+  --surface-2: rgba(244, 237, 227, 0.92);
+  /* İkincil yüzey */
+  --surface-hover: rgba(238, 229, 216, 0.95);
+  --surface-alt: rgba(255, 253, 249, 0.94);
 
-  --border:        rgba(17, 24, 39, 0.08);
-  --border-strong: rgba(17, 24, 39, 0.13);
-  --border-focus:  rgba(79, 70, 229, 0.48);
+  --border: rgba(68, 54, 42, 0.08);
+  --border-strong: rgba(68, 54, 42, 0.13);
+  --border-focus: rgba(109, 98, 232, 0.50);
 
-  --text-primary:   #111318;   /* Derin mürekkep siyahı (WCAG AAA) */
-  --text-secondary: #374151;   /* Koyu arduvaz (WCAG AA+) */
-  --text-muted:     #4B5563;   /* Orta koyu gri (WCAG AA) */
-  --text-faint:     #6B7280;   /* Yardımcı gri */
+  --text-primary: #211C18;
+  /* Sıcak koyu espresso mürekkebi (WCAG AAA) */
+  --text-secondary: #4C443D;
+  /* Sıcak koyu kahve-gri (WCAG AA+) */
+  --text-muted: #6E645C;
+  /* Sıcak taş grisi (WCAG AA) */
+  --text-faint: #8F847A;
+  /* Yardımcı gri */
 
-  --nav-bg:    rgba(255, 255, 255, 0.88);
-  --input-bg:  rgba(255, 255, 255, 0.95);
-  --sheet-bg:  #FAF8F4;
-  --overlay:   rgba(15, 18, 25, 0.42);
+  --nav-bg: rgba(255, 252, 247, 0.90);
+  --input-bg: rgba(255, 253, 250, 0.96);
+  --sheet-bg: #FCF8F2;
+  --overlay: rgba(33, 26, 20, 0.40);
 
-  --primary:       #4F46E5;   /* Sıcak İndigo (Light kontrast) */
-  --primary-hover: #4338CA;
-  --primary-light: #6366F1;
-  --primary-dim:   rgba(79, 70, 229, 0.10);
-  --primary-glow:  rgba(79, 70, 229, 0.22);
+  --primary: #6D62E8;
+  /* Samimi sıcak iris (Light kontrast) */
+  --primary-hover: #5B50DB;
+  --primary-light: #7E74F2;
+  --primary-dim: rgba(109, 98, 232, 0.11);
+  --primary-glow: rgba(109, 98, 232, 0.24);
 
-  --success:       #059669;
+  --success: #059669;
   --success-light: #10B981;
-  --success-dim:   rgba(16, 185, 129, 0.12);
+  --success-dim: rgba(16, 185, 129, 0.12);
 
-  --priority-low:    #64748B;
+  --priority-low: #64748B;
   --priority-medium: #D97706;
-  --priority-high:   #DC2626;
+  --priority-high: #DC2626;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -250,21 +271,51 @@ h4,
    ══════════════════════════════════════════════════════════════ */
 
 /* Arka planlar */
-.bg-app         { background-color: var(--bg); }
-.bg-app-2       { background-color: var(--bg-2); }
-.bg-surface     { background-color: var(--surface); }
-.bg-surface-2   { background-color: var(--surface-2); }
-.bg-surface-alt { background-color: var(--surface-alt); }
+.bg-app {
+  background-color: var(--bg);
+}
+
+.bg-app-2 {
+  background-color: var(--bg-2);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.bg-surface-2 {
+  background-color: var(--surface-2);
+}
+
+.bg-surface-alt {
+  background-color: var(--surface-alt);
+}
 
 /* Metinler */
-.text-app-primary   { color: var(--text-primary); }
-.text-app-secondary { color: var(--text-secondary); }
-.text-app-muted     { color: var(--text-muted); }
-.text-app-faint     { color: var(--text-faint); }
+.text-app-primary {
+  color: var(--text-primary);
+}
+
+.text-app-secondary {
+  color: var(--text-secondary);
+}
+
+.text-app-muted {
+  color: var(--text-muted);
+}
+
+.text-app-faint {
+  color: var(--text-faint);
+}
 
 /* Kenarlıklar */
-.border-app        { border-color: var(--border); }
-.border-app-strong { border-color: var(--border-strong); }
+.border-app {
+  border-color: var(--border);
+}
+
+.border-app-strong {
+  border-color: var(--border-strong);
+}
 
 /* ══════════════════════════════════════════════════════════════
    iOS SAFE AREA YARDIMCILARI
@@ -305,9 +356,20 @@ h4,
   box-shadow: 0 8px 24px var(--primary-glow);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:active { transform: scale(0.97); }
-.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
 /* Ghost buton */
 .btn-ghost {
@@ -324,11 +386,15 @@ h4,
   border: 1px solid var(--border);
   transition: all 0.18s ease;
 }
+
 .btn-ghost:hover {
   color: var(--text-primary);
   border-color: var(--border-strong);
 }
-.btn-ghost:active { transform: scale(0.96); }
+
+.btn-ghost:active {
+  transform: scale(0.96);
+}
 
 /* Standart input */
 .input-base {
@@ -345,7 +411,11 @@ h4,
   transition: all 0.2s ease;
   font-family: inherit;
 }
-.input-base::placeholder { color: var(--text-muted); }
+
+.input-base::placeholder {
+  color: var(--text-muted);
+}
+
 .input-base:focus {
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--primary-dim);
@@ -468,6 +538,7 @@ input:-webkit-autofill:active {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
+
   100% {
     transform: translate3d(28px, 22px, 0) scale(1.06);
   }
@@ -477,6 +548,7 @@ input:-webkit-autofill:active {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
   }
+
   100% {
     transform: translate3d(-24px, -18px, 0) scale(1.05);
   }
@@ -488,11 +560,25 @@ input:-webkit-autofill:active {
 
 /* 1. Checkbox Elastik Yaylanma */
 @keyframes check-elastic {
-  0%   { transform: scale(1); }
-  25%  { transform: scale(0.82); }
-  50%  { transform: scale(1.18); }
-  75%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(0.82);
+  }
+
+  50% {
+    transform: scale(1.18);
+  }
+
+  75% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .animate-check-elastic {
@@ -506,9 +592,11 @@ input:-webkit-autofill:active {
     opacity: 0.9;
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
   }
+
   60% {
     opacity: 0.5;
   }
+
   100% {
     transform: scale(1.75);
     opacity: 0;
@@ -526,9 +614,11 @@ input:-webkit-autofill:active {
     stroke-dashoffset: 24;
     opacity: 0;
   }
+
   30% {
     opacity: 1;
   }
+
   100% {
     stroke-dashoffset: 0;
     opacity: 1;
@@ -547,6 +637,7 @@ input:-webkit-autofill:active {
     transform: translate(0, 0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translate(var(--tx, 14px), var(--ty, -14px)) scale(0);
     opacity: 0;
@@ -563,9 +654,11 @@ input:-webkit-autofill:active {
     transform: translateX(-100%);
     opacity: 0;
   }
+
   40% {
     opacity: 1;
   }
+
   100% {
     transform: translateX(100%);
     opacity: 0;
@@ -578,8 +671,13 @@ input:-webkit-autofill:active {
 
 /* 6. Dinamik Strikethrough Çizgi Animasyonu */
 @keyframes strike-draw {
-  0%   { transform: scaleX(0); }
-  100% { transform: scaleX(1); }
+  0% {
+    transform: scaleX(0);
+  }
+
+  100% {
+    transform: scaleX(1);
+  }
 }
 
 .animate-strike-draw {
@@ -589,8 +687,13 @@ input:-webkit-autofill:active {
 
 /* 7. Geri Al Toast 5sn İlerleme Çubuğu */
 @keyframes toast-countdown {
-  from { transform: scaleX(1); }
-  to   { transform: scaleX(0); }
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
 }
 
 .animate-toast-countdown {
@@ -607,6 +710,7 @@ input:-webkit-autofill:active {
     transform: translateY(100%);
     opacity: 0;
   }
+
   to {
     transform: none;
     opacity: 1;
@@ -622,6 +726,7 @@ input:-webkit-autofill:active {
     transform: scale(0.94) translateY(-4px);
     opacity: 0;
   }
+
   to {
     transform: none;
     opacity: 1;
@@ -637,6 +742,7 @@ input:-webkit-autofill:active {
     opacity: 0;
     transform: translateY(8px) scale(0.985);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -652,6 +758,7 @@ input:-webkit-autofill:active {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: none;
@@ -664,8 +771,15 @@ input:-webkit-autofill:active {
 
 /* Float animasyonu — EmptyState için */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%      { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 .animate-float {
@@ -674,9 +788,17 @@ input:-webkit-autofill:active {
 
 /* Tema geçiş animasyonu */
 @keyframes theme-spin {
-  from { transform: rotate(0deg) scale(1); }
-  50%  { transform: rotate(180deg) scale(0.82); }
-  to   { transform: rotate(360deg) scale(1); }
+  from {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(0.82);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 .animate-theme-toggle {
@@ -685,8 +807,17 @@ input:-webkit-autofill:active {
 
 /* Odak modu nefes alma animasyonu */
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.4; }
-  50%      { transform: scale(1.08); opacity: 0.75; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.08);
+    opacity: 0.75;
+  }
 }
 
 .animate-breathe {
@@ -697,6 +828,7 @@ input:-webkit-autofill:active {
    ERİŞİLEBİLİRLİK: PREFERS-REDUCED-MOTION DESTEĞİ
    ══════════════════════════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -722,6 +854,7 @@ input:-webkit-autofill:active {
 }
 
 @media screen and (max-width: 768px) {
+
   input,
   select,
   textarea {
