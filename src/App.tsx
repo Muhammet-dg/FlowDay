@@ -14,6 +14,7 @@ import { Confetti } from './components/Confetti';
 import { UndoToast } from './components/UndoToast';
 import { PwaUpdateToast } from './components/PwaUpdateToast';
 import { BackgroundAnimation } from './components/BackgroundAnimation';
+import { BrandLogo } from './components/BrandLogo';
 import { useTasks } from './hooks/useTasks';
 import { useProjects } from './hooks/useProjects';
 import { useLearnings } from './hooks/useLearnings';
@@ -206,18 +207,15 @@ function App() {
       <div className="relative min-h-dvh h-dvh w-full flex items-center justify-center select-none overflow-hidden bg-transparent">
         <BackgroundAnimation />
         <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
-          <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-2xl"
-            style={{
-              background: 'var(--primary)',
-              boxShadow: '0 12px 32px var(--primary-glow)',
-            }}
-          >
-            <Loader2 size={26} className="text-white animate-spin" />
+          <div className="relative rounded-[20px] shadow-2xl" style={{ boxShadow: '0 14px 36px var(--primary-glow)' }}>
+            <BrandLogo size={68} />
           </div>
           <div className="text-center">
-            <p className="text-app-primary font-display font-bold text-base tracking-tight">FlowDay</p>
-            <p className="text-app-muted text-xs mt-0.5">Hazırlanıyor...</p>
+            <p className="text-app-primary font-display font-bold text-lg tracking-tight">FlowDay</p>
+            <p className="text-app-muted text-xs mt-0.5 flex items-center justify-center gap-1.5">
+              <Loader2 size={12} className="animate-spin text-indigo-400" />
+              <span>Hazırlanıyor...</span>
+            </p>
           </div>
         </div>
       </div>

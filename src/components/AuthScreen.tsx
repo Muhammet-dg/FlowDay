@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { UseAuthReturn } from '../hooks/useAuth';
 import { BackgroundAnimation } from './BackgroundAnimation';
+import { BrandLogo } from './BrandLogo';
 
 type Mode = 'signin' | 'signup';
 
@@ -77,14 +78,8 @@ export function AuthScreen({
       <div className="relative z-10 w-full max-w-sm animate-fade-in">
         {/* Logo / Başlık */}
         <div className="text-center mb-8">
-          <div
-            className="inline-flex w-16 h-16 rounded-2xl items-center justify-center mb-4 shadow-xl"
-            style={{
-              background: 'var(--primary)',
-              boxShadow: '0 12px 32px var(--primary-glow)',
-            }}
-          >
-            <CheckCircle2 size={28} className="text-white" strokeWidth={2.2} />
+          <div className="inline-flex mb-4 rounded-[20px] shadow-xl" style={{ boxShadow: '0 14px 36px var(--primary-glow)' }}>
+            <BrandLogo size={68} />
           </div>
           <p className="text-app-muted text-[11px] font-bold uppercase tracking-[0.18em]">
             Günlük Planlayıcı
